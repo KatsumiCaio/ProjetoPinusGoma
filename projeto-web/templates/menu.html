@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Principal - Sistema Florestal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="with-navbar">
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">Sistema Florestal</div>
+            <div class="navbar-user">
+                <span>🌿 Bem-vindo, {{ username }}!</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout" onclick="return confirmLogout()">🚪 Sair</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="menu-container">
+        <div class="header">
+            <h1>Painel de Controle</h1>
+            <p>Selecione uma opção para gerenciar os processos florestais</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="menu-grid">
+            <a href="{{ url_for('entrada_carga') }}" class="menu-item">
+                <div class="icon"></div>
+                <h3>Entrada de Carga</h3>
+                <p>Registrar e controlar a entrada de materiais florestais, madeira e produtos derivados</p>
+            </a>
+
+            <a href="{{ url_for('relatorio_entradas') }}" class="menu-item">
+                <div class="icon"></div>
+                <h3>Relatório de Entradas</h3>
+                <p>Visualizar relatórios detalhados das entradas registradas no sistema</p>
+            </a>
+
+            <a href="{{ url_for('encontrar_processo') }}" class="menu-item">
+                <div class="icon"></div>
+                <h3>Encontrar Processo</h3>
+                <p>Buscar e consultar processos florestais por diversos critérios de pesquisa</p>
+            </a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

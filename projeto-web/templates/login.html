@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema Florestal</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container fade-in-up">
+        <div class="header">
+            <h1>Sistema Florestal</h1>
+            <p>Gestão e Controle de Processos Florestais</p>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="loginForm">
+            <div class="form-group">
+                <label for="username">👤 Usuário:</label>
+                <input type="text" id="username" name="username" required placeholder="Digite seu usuário">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">🔒 Senha:</label>
+                <input type="password" id="password" name="password" required placeholder="Digite sua senha">
+            </div>
+            
+            <button type="submit" class="btn">🌲 Entrar no Sistema</button>
+        </form>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(107, 142, 35, 0.1); border-radius: 8px; font-size: 0.85rem; color: #4a7c59;">
+            <strong>Usuários de teste:</strong><br>
+            👤 admin / 🔒 123456<br>
+            👤 usuario / 🔒 senha123
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
