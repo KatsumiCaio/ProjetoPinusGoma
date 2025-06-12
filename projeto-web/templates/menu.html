@@ -9,7 +9,7 @@
 <body class="with-navbar">
     <nav class="navbar">
         <div class="navbar-content">
-            <div class="navbar-brand">Sistema Florestal</div>
+            <div class="navbar-brand">Sistema de Entrada de Goma Resina Pinus Brasil</div>
             <div class="navbar-user">
                 <span>🌿 Bem-vindo, {{ username }}!</span>
                 <a href="{{ url_for('logout') }}" class="btn btn-logout" onclick="return confirmLogout()">🚪 Sair</a>
@@ -20,7 +20,7 @@
     <div class="menu-container">
         <div class="header">
             <h1>Painel de Controle</h1>
-            <p>Selecione uma opção para gerenciar os processos florestais</p>
+            <p>Selecione uma opção para gerenciar os processos</p>
         </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -35,7 +35,7 @@
             <a href="{{ url_for('entrada_carga') }}" class="menu-item">
                 <div class="icon"></div>
                 <h3>Entrada de Carga</h3>
-                <p>Registrar e controlar a entrada de materiais florestais, madeira e produtos derivados</p>
+                <p>Registrar e controlar a entrada de goma resina</p>
             </a>
 
             <a href="{{ url_for('relatorio_entradas') }}" class="menu-item">
