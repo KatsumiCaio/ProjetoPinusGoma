@@ -29,6 +29,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Validação do formulário de entrada de carga
+    const entradaCargaForm = document.querySelector('form');
+    if (entradaCargaForm) {
+        entradaCargaForm.addEventListener('submit', function(e) {
+            const requiredFields = ['fornecedor', 'data_entrada', 'motorista', 'placa', 'quantidade_tambores', 'especie_resina', 'lote', 'ticket_pesagem', 'peso_liquido'];
+            let isValid = true;
+
+            requiredFields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (!field || !field.value.trim()) {
+                    isValid = false;
+                    field.style.border = '2px solid red';
+                } else {
+                    field.style.border = '';
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                showAlert('⚠️ Por favor, preencha todos os campos obrigatórios!', 'error');
+            }
+        });
+    }
+
     // Animação dos cards do menu
     const menuItems = document.querySelectorAll('.menu-item');
     menuItems.forEach((item, index) => {

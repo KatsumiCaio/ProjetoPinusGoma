@@ -2,9 +2,14 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import json
 import os
 from datetime import datetime
+import logging
+import sqlite3
 
 app = Flask(__name__)
 app.secret_key = 'florestal_secret_key_2024'  # Mude para uma chave mais segura em produção
+
+# Configuração de logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_users():
     """Carrega usuários do arquivo JSON"""
@@ -13,7 +18,16 @@ def load_users():
             data = json.load(file)
             return data['users']
     except FileNotFoundError:
-        print("Arquivo users.json não encontrado!")
+        logging.warning("Arquivo users.json não encontrado! Criando arquivo...")
+        # Cria o arquivo com um usuário padrão
+        default_users = {"users": [
+            {"username": "admin", "password": "123456"}
+        ]}
+        with open('users.json', 'w', encoding='utf-8') as file:
+            json.dump(default_users, file, indent=2, ensure_ascii=False)
+        return default_users['users']
+    except json.JSONDecodeError:
+        logging.error("Erro no formato do arquivo users.json!")
         return []
 
 def save_users(users):
@@ -48,12 +62,42 @@ def save_processos(processos):
         print(f"Erro ao salvar processos: {e}")
         return False
 
+def load_entradas():
+    """Carrega entradas de carga do arquivo JSON"""
+    try:
+        with open('entradas_carga.json', 'r', encoding='utf-8') as file:
+            data = json.load(file)
+            return data.get('entradas', [])  # Retorna lista vazia se não existir a chave
+    except FileNotFoundError:
+        logging.warning("Arquivo entradas_carga.json não encontrado! Criando arquivo...")
+        with open('entradas_carga.json', 'w', encoding='utf-8') as file:
+            json.dump({"entradas": []}, file, indent=2)
+        return []
+    except json.JSONDecodeError:
+        logging.error("Erro no formato do arquivo entradas_carga.json!")
+        return []
+
+def save_entradas(entradas):
+    """Salva entradas de carga no arquivo JSON"""
+    try:
+        data = {'entradas': entradas}
+        with open('entradas_carga.json', 'w', encoding='utf-8') as file:
+            json.dump(data, file, indent=2, ensure_ascii=False)
+        logging.info("Entradas de carga salvas com sucesso.")
+        return True
+    except Exception as e:
+        logging.error(f"Erro ao salvar entradas: {e}")
+        return False
+
 def validate_user(username, password):
     """Valida credenciais do usuário"""
+    logging.debug(f"Validando usuário: {username}")
     users = load_users()
     for user in users:
         if user['username'] == username and user['password'] == password:
+            logging.info(f"Usuário {username} validado com sucesso.")
             return True
+    logging.warning(f"Falha na validação do usuário: {username}")
     return False
 
 def user_exists(username):
@@ -63,6 +107,74 @@ def user_exists(username):
         if user['username'] == username:
             return True
     return False
+
+# Função para inicializar o banco de dados e criar a tabela se não existir
+def init_db():
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS entradas_carga (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fornecedor TEXT NOT NULL,
+            data_entrada TEXT NOT NULL,
+            motorista TEXT NOT NULL,
+            placa TEXT NOT NULL,
+            quantidade_tambores INTEGER NOT NULL,
+            especie_resina TEXT NOT NULL,
+            lote TEXT NOT NULL,
+            ticket_pesagem TEXT NOT NULL UNIQUE,
+            peso_liquido REAL NOT NULL,
+            data_registro TEXT NOT NULL,
+            usuario_registro TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def inserir_entrada_carga(entrada):
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            INSERT INTO entradas_carga (
+                fornecedor, data_entrada, motorista, placa, quantidade_tambores, especie_resina, lote, ticket_pesagem, peso_liquido, data_registro, usuario_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            entrada['fornecedor'],
+            entrada['data_entrada'],
+            entrada['motorista'],
+            entrada['placa'],
+            entrada['quantidade_tambores'],
+            entrada['especie_resina'],
+            entrada['lote'],
+            entrada['ticket_pesagem'],
+            entrada['peso_liquido'],
+            entrada['data_registro'],
+            entrada['usuario_registro']
+        ))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def ticket_existe(ticket_pesagem):
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT 1 FROM entradas_carga WHERE ticket_pesagem = ?', (ticket_pesagem,))
+    existe = cursor.fetchone() is not None
+    conn.close()
+    return existe
+
+def listar_entradas():
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM entradas_carga ORDER BY lote ASC')
+    colunas = [desc[0] for desc in cursor.description]
+    entradas = [dict(zip(colunas, row)) for row in cursor.fetchall()]
+    conn.close()
+    return entradas
 
 @app.route('/')
 def index():
@@ -77,6 +189,7 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        logging.debug(f"Tentativa de login com usuário: {username}")
         
         if validate_user(username, password):
             session['logged_in'] = True
@@ -210,48 +323,14 @@ def cadastrar_usuario():
     return render_template('cadastrar_usuario.html')
 
 # Rotas temporárias para as páginas (apenas para não dar erro 404)
-@app.route('/entrada-carga')
-# Adicione estas funções após as outras funções de load/save
-
-def load_entradas():
-    """Carrega entradas de carga do arquivo JSON"""
-    try:
-        with open('entradas_carga.json', 'r', encoding='utf-8') as file:
-            data = json.load(file)
-            return data.get('entradas', [])  # Retorna lista vazia se não existir a chave
-    except FileNotFoundError:
-        print("Arquivo entradas_carga.json não encontrado! Criando arquivo...")
-        # Cria o arquivo se não existir
-        with open('entradas_carga.json', 'w', encoding='utf-8') as file:
-            json.dump({"entradas": []}, file, indent=2)
-        return []
-    except json.JSONDecodeError:
-        print("Erro no formato do arquivo entradas_carga.json!")
-        return []
-
-
-def save_entradas(entradas):
-    """Salva entradas de carga no arquivo JSON"""
-    try:
-        data = {'entradas': entradas}
-        with open('entradas_carga.json', 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent=2, ensure_ascii=False)
-        return True
-    except Exception as e:
-        print(f"Erro ao salvar entradas: {e}")
-        return False
-
-# Substitua a rota temporária por esta:
-
 @app.route('/entrada-carga', methods=['GET', 'POST'])
 def entrada_carga():
-    """Página para registrar entrada de carga"""
+    """Página para registrar entrada de carga usando banco de dados"""
     if 'logged_in' not in session or not session['logged_in']:
         flash('🔒 Você precisa fazer login primeiro!', 'error')
         return redirect(url_for('login'))
-    
+
     if request.method == 'POST':
-        # Coleta dados do formulário
         fornecedor = request.form['fornecedor'].strip()
         data_entrada = request.form['data_entrada']
         motorista = request.form['motorista'].strip()
@@ -261,32 +340,23 @@ def entrada_carga():
         lote = request.form['lote'].strip()
         ticket_pesagem = request.form['ticket_pesagem'].strip()
         peso_liquido = request.form['peso_liquido']
-        
-        # Validação básica
-        if not all([fornecedor, data_entrada, motorista, placa, quantidade_tambores, 
-                   especie_resina, lote, ticket_pesagem, peso_liquido]):
+
+        if not all([fornecedor, data_entrada, motorista, placa, quantidade_tambores, especie_resina, lote, ticket_pesagem, peso_liquido]):
             flash('❌ Todos os campos são obrigatórios!', 'error')
             return render_template('entrada_carga.html')
-        
+
         try:
             quantidade_tambores = int(quantidade_tambores)
             peso_liquido = float(peso_liquido)
         except ValueError:
             flash('❌ Quantidade de tambores deve ser um número inteiro e peso líquido um número válido!', 'error')
             return render_template('entrada_carga.html')
-        
-        # Carrega entradas existentes
-        entradas = load_entradas()
-        
-        # Verifica se o ticket de pesagem já existe
-        for entrada in entradas:
-            if entrada['ticket_pesagem'] == ticket_pesagem:
-                flash('❌ Número do ticket de pesagem já existe!', 'error')
-                return render_template('entrada_carga.html')
-        
-        # Cria nova entrada
+
+        if ticket_existe(ticket_pesagem):
+            flash('❌ Número do ticket de pesagem já existe!', 'error')
+            return render_template('entrada_carga.html')
+
         nova_entrada = {
-            'id': len(entradas) + 1,
             'fornecedor': fornecedor,
             'data_entrada': data_entrada,
             'motorista': motorista,
@@ -299,15 +369,13 @@ def entrada_carga():
             'data_registro': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
             'usuario_registro': session['username']
         }
-        
-        # Adiciona à lista e salva
-        entradas.append(nova_entrada)
-        if save_entradas(entradas):
+
+        if inserir_entrada_carga(nova_entrada):
             flash('✅ Entrada de carga registrada com sucesso!', 'success')
             return redirect(url_for('menu'))
         else:
-            flash('❌ Erro ao salvar entrada de carga!', 'error')
-    
+            flash('❌ Erro ao salvar entrada de carga! Ticket duplicado.', 'error')
+
     return render_template('entrada_carga.html')
 
 
@@ -315,7 +383,8 @@ def entrada_carga():
 def relatorio_entradas():
     if 'logged_in' not in session or not session['logged_in']:
         return redirect(url_for('login'))
-    return "<h1>🚧 Página em construção - Relatório de Entradas</h1><a href='/menu'>Voltar ao Menu</a>"
+    entradas = listar_entradas()
+    return render_template('relatorio_entradas.html', entradas=entradas)
 
 @app.route('/encontrar-processo')
 def encontrar_processo():
@@ -330,5 +399,6 @@ if __name__ == '__main__':
     for user in users:
         print(f"   👤 {user['username']} / 🔒 {user['password']}")
     print("🌐 Acesse: http://localhost:5000")
+    init_db()
     app.run(debug=True, host='0.0.0.0', port=5000)
 

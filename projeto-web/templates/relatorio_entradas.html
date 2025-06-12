@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Entradas de Carga</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background: #f7faf7;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background: #2d5a27;
+            padding: 1.2rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+        }
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .back-btn {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #6c757d;
+            color: white;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .back-btn:hover {
+            background: #545b62;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 2.5rem auto 0 auto;
+            padding: 1.5rem 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            font-size: 1rem;
+            min-width: 900px;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 0.5rem 0.3rem;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        th {
+            background: #4a7c59;
+            color: #fff;
+            font-size: 1.02rem;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background: #f2f7f2;
+        }
+        tr:hover {
+            background: #e6f7e6;
+        }
+        @media (max-width: 1100px) {
+            table, th, td {
+                font-size: 0.95rem;
+            }
+        }
+        @media (max-width: 700px) {
+            .container {
+                padding: 0.2rem;
+            }
+            table, th, td {
+                font-size: 0.85rem;
+            }
+            th, td {
+                padding: 0.3rem 0.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{{ url_for('menu') }}" class="back-btn">← Voltar ao Menu</a>
+        <div class="header-title">📋 Relatório de Entradas de Carga</div>
+    </div>
+    <div class="container">
+        {% if entradas %}
+        <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fornecedor</th>
+                    <th>Data Entrada</th>
+                    <th>Motorista</th>
+                    <th>Placa</th>
+                    <th>Qtd. Tambores</th>
+                    <th>Espécie Resina</th>
+                    <th>Lote</th>
+                    <th>Ticket Pesagem</th>
+                    <th>Peso Líquido (kg)</th>
+                    <th>Data Registro</th>
+                    <th>Usuário</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entrada in entradas %}
+                <tr>
+                    <td>{{ entrada.fornecedor }}</td>
+                    <td>{{ entrada.data_entrada }}</td>
+                    <td>{{ entrada.motorista }}</td>
+                    <td>{{ entrada.placa }}</td>
+                    <td>{{ entrada.quantidade_tambores }}</td>
+                    <td>{{ entrada.especie_resina }}</td>
+                    <td>{{ entrada.lote }}</td>
+                    <td>{{ entrada.ticket_pesagem }}</td>
+                    <td>{{ entrada.peso_liquido }}</td>
+                    <td>{{ entrada.data_registro }}</td>
+                    <td>{{ entrada.usuario_registro }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <p style="text-align:center; color:#888;">Nenhuma entrada de carga registrada.</p>
+        {% endif %}
+    </div>
+</body>
+</html>
