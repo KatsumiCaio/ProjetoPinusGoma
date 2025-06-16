@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,55 +13,68 @@
             padding: 0;
             min-height: 100vh;
         }
+
         .header {
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             padding: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             color: white;
         }
+
         .header h1 {
             margin: 0;
         }
+
         .back-btn {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             color: white;
             padding: 0.5rem 1rem;
             text-decoration: none;
             border-radius: 5px;
             transition: background 0.3s;
         }
+
         .back-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: rgba(255, 255, 255, 0.3);
         }
+
         .container {
             max-width: 900px;
             margin: 2rem auto;
             padding: 0 1rem;
         }
+
         .form-container {
             background: white;
             padding: 2rem;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
+
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
             margin-bottom: 1.5rem;
         }
+
         .form-group {
             margin-bottom: 1.5rem;
         }
+
         label {
             display: block;
             margin-bottom: 0.5rem;
             color: #333;
             font-weight: bold;
         }
-        input[type="text"], input[type="date"], input[type="number"], select {
+
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #ddd;
@@ -68,6 +82,7 @@
             box-sizing: border-box;
             font-size: 1rem;
         }
+
         .btn {
             background: #2d5a27;
             color: white;
@@ -78,38 +93,47 @@
             font-size: 1rem;
             margin-right: 1rem;
         }
+
         .btn:hover {
             background: #1e3d1a;
         }
+
         .btn-secondary {
             background: #6c757d;
         }
+
         .btn-secondary:hover {
             background: #545b62;
         }
+
         .alert {
             padding: 0.75rem;
             margin-bottom: 1rem;
             border-radius: 5px;
         }
+
         .alert.success {
             background: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
+
         .alert.error {
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+
         .form-title {
             color: #2d5a27;
             margin-bottom: 2rem;
             text-align: center;
         }
+
         .required {
             color: #dc3545;
         }
+
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
@@ -117,55 +141,69 @@
         }
     </style>
 </head>
+
 <body>
     <div class="header">
         <h1>🚛 Entrada de Carga</h1>
         <a href="{{ url_for('menu') }}" class="back-btn">← Voltar ao Menu</a>
     </div>
-    
+
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert {{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
-        
+
         <div class="form-container">
             <h2 class="form-title">Registrar Nova Entrada de Carga</h2>
-            
+
             <form method="POST">
                 <div class="form-row">
                     <div class="form-group">
                         <label for="fornecedor">Fornecedor <span class="required">*</span>:</label>
                         <input type="text" id="fornecedor" name="fornecedor" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="data_entrada">Data da Entrada <span class="required">*</span>:</label>
                         <input type="date" id="data_entrada" name="data_entrada" required>
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="motorista">Motorista <span class="required">*</span>:</label>
                         <input type="text" id="motorista" name="motorista" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="placa">Placa do Veículo <span class="required">*</span>:</label>
                         <input type="text" id="placa" name="placa" required maxlength="8">
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="quantidade_tambores">Quantidade de Tambores <span class="required">*</span>:</label>
                         <input type="number" id="quantidade_tambores" name="quantidade_tambores" required min="1">
                     </div>
-                    
+
+                    <div class="form-group">
+                        <label for="pedido_compra">Pedido de Compra:</label>
+                        <input type="text" id="pedido_compra" name="pedido_compra"
+                            placeholder="Digite o pedido de compra">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="categoria">Categoria:</label>
+                        <input type="text" id="categoria" name="categoria" placeholder="Digite a categoria">
+                    </div>
+
                     <div class="form-group">
                         <label for="especie_resina">Espécie de Resina <span class="required">*</span>:</label>
                         <select id="especie_resina" name="especie_resina" required>
@@ -176,24 +214,24 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="lote">Lote <span class="required">*</span>:</label>
                         <input type="text" id="lote" name="lote" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="ticket_pesagem">Nº Ticket de Pesagem <span class="required">*</span>:</label>
                         <input type="text" id="ticket_pesagem" name="ticket_pesagem" required>
                     </div>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="peso_liquido">Peso Líquido (kg) <span class="required">*</span>:</label>
                     <input type="number" id="peso_liquido" name="peso_liquido" required min="0" step="0.01">
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 2rem;">
                     <button type="submit" class="btn">💾 Registrar Entrada</button>
                     <a href="{{ url_for('menu') }}" class="btn btn-secondary">❌ Cancelar</a>
@@ -201,13 +239,13 @@
             </form>
         </div>
     </div>
-    
+
     <script>
         // Define a data atual como padrão
         document.getElementById('data_entrada').valueAsDate = new Date();
-        
+
         // Formatação da placa
-        document.getElementById('placa').addEventListener('input', function(e) {
+        document.getElementById('placa').addEventListener('input', function (e) {
             let value = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
             if (value.length > 3) {
                 value = value.substring(0, 3) + '-' + value.substring(3, 7);
@@ -216,4 +254,5 @@
         });
     </script>
 </body>
+
 </html>

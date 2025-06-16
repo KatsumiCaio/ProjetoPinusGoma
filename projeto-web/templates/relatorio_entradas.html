@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Entradas de Carga</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <style>
         /* Sobrescreve o display flex do body global apenas nesta página */
         body.relatorio-body {
@@ -12,6 +15,7 @@
             background: #f7faf7;
             min-height: 100vh;
         }
+
         .header {
             background: #2d5a27;
             padding: 1.2rem 1rem;
@@ -21,6 +25,7 @@
             color: white;
             position: relative;
         }
+
         .header-title {
             flex: 1;
             text-align: center;
@@ -28,6 +33,7 @@
             font-weight: bold;
             letter-spacing: 1px;
         }
+
         .back-btn {
             position: absolute;
             left: 1rem;
@@ -40,68 +46,89 @@
             border-radius: 5px;
             font-size: 1rem;
         }
+
         .back-btn:hover {
             background: #545b62;
         }
+
         .container {
-            max-width: 1200px !important;
+            max-width: 1800px !important;
             margin: 2.5rem auto 0 auto;
             padding: 1.5rem 1rem;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
         }
+
         .table-responsive {
             overflow-x: auto;
             width: 100%;
         }
+
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 0.5rem;
             font-size: 1rem;
             max-width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
         }
-        th, td {
+
+        th,
+        td {
             border: 1px solid #e0e0e0;
             padding: 0.5rem 0.3rem;
             text-align: center;
             vertical-align: middle;
             white-space: normal;
             word-wrap: break-word;
+            min-width: 120px;
         }
+
         th {
             background: #4a7c59;
             color: #fff;
             font-size: 1.02rem;
             font-weight: 600;
         }
+
         tr:nth-child(even) {
             background: #f2f7f2;
         }
+
         tr:hover {
             background: #e6f7e6;
         }
+
         @media (max-width: 1100px) {
-            table, th, td {
+
+            table,
+            th,
+            td {
                 font-size: 0.95rem;
             }
         }
+
         @media (max-width: 700px) {
             .container {
                 padding: 0.2rem;
             }
-            table, th, td {
+
+            table,
+            th,
+            td {
                 font-size: 0.75rem;
             }
-            th, td {
+
+            th,
+            td {
                 padding: 0.2rem 0.2rem;
                 white-space: normal;
             }
         }
     </style>
 </head>
+
 <body class="relatorio-body">
     <div class="header">
         <a href="{{ url_for('menu') }}" class="back-btn">← Voltar ao Menu</a>
@@ -110,43 +137,56 @@
     <div class="container">
         {% if entradas %}
         <div class="table-responsive">
-            <table>
+            <table id="tabela-entradas">
                 <thead>
                     <tr>
-                        <th>Fornecedor</th>
-                        <th>Data Entrada</th>
-                        <th>Motorista</th>
-                        <th>Placa</th>
-                        <th>Qtd. Tambores</th>
-                        <th>Espécie Resina</th>
                         <th>Lote</th>
+                        <th>Data Entrada</th>
+                        <th>Placa</th>
+                        <th>Motorista</th>
                         <th>Ticket Pesagem</th>
+                        <th>Pedido de Compra</th>
+                        <th>Fornecedor</th>
+                        <th>Qtd. Tambores</th>
                         <th>Peso Líquido (kg)</th>
-                        <th>Data Registro</th>
-                        <th>Usuário</th>
+                        <th>Média (kg/tambor)</th>
+                        <th>Espécie Resina</th>
+                        <th>Categoria</th>
                         <th>PDF</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for entrada in entradas %}
                     <tr>
-                        <td>{{ entrada.fornecedor }}</td>
-                        <td>{{ entrada.data_entrada }}</td>
-                        <td>{{ entrada.motorista }}</td>
-                        <td>{{ entrada.placa }}</td>
-                        <td>{{ entrada.quantidade_tambores }}</td>
-                        <td>{{ entrada.especie_resina }}</td>
                         <td>{{ entrada.lote }}</td>
+                        <td>{{ entrada.data_entrada }}</td>
+                        <td>{{ entrada.placa }}</td>
+                        <td>{{ entrada.motorista }}</td>
                         <td>{{ entrada.ticket_pesagem }}</td>
+                        <td>{{ entrada.pedido_compra or '' }}</td>
+                        <td>{{ entrada.fornecedor }}</td>
+                        <td>{{ entrada.quantidade_tambores }}</td>
                         <td>{{ entrada.peso_liquido }}</td>
-                        <td>{{ entrada.data_registro }}</td>
-                        <td>{{ entrada.usuario_registro }}</td>
+                        <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido /
+                            entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
+                        <td>{{ entrada.especie_resina }}</td>
+                        <td>{{ entrada.categoria or '' }}</td>
                         <td>
-                            <a href="{{ url_for('visualizar_pdfs_lote', lote=entrada.lote) }}" class="btn" style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">PDF</a>
+                            <a href="{{ url_for('visualizar_pdfs_lote', lote=entrada.lote) }}" class="btn"
+                                style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">PDF</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="7" style="text-align:right">Totais:</th>
+                        <th id="soma-tambores"></th>
+                        <th id="soma-peso"></th>
+                        <th id="media-peso-tambor"></th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
             </table>
         </div>
         {% else %}
@@ -154,13 +194,54 @@
         {% endif %}
     </div>
 </body>
-</html>
+<!-- JQuery e DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         const backBtn = document.querySelector('.back-btn');
-        backBtn.addEventListener('click', function(event) {
+        backBtn.addEventListener('click', function (event) {
             event.preventDefault();
             window.history.back();
+        });
+        // DataTables com filtro tipo Excel (dropdown por coluna) e somatórios
+        $('#tabela-entradas').DataTable({
+            language: {
+                url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
+            },
+            initComplete: function () {
+                this.api().columns().every(function () {
+                    var column = this;
+                    var select = $('<select><option value="">Todos</option></select>')
+                        .appendTo($(column.footer()).empty())
+                        .on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                    column.data().unique().sort().each(function (d, j) {
+                        if (d !== undefined && d !== null && d !== "") {
+                            select.append('<option value="' + d + '">' + d + '</option>');
+                        }
+                    });
+                });
+            },
+            footerCallback: function (row, data, start, end, display) {
+                var api = this.api();
+                // Soma Qtd. Tambores (coluna 7)
+                var somaTambores = api.column(7, { search: 'applied' }).data().reduce(function (a, b) {
+                    return (parseInt(a) || 0) + (parseInt(b) || 0);
+                }, 0);
+                // Soma Peso Líquido (coluna 9)
+                var somaPeso = api.column(9, { search: 'applied' }).data().reduce(function (a, b) {
+                    return (parseFloat(a) || 0) + (parseFloat(b) || 0);
+                }, 0);
+                // Média Peso por Tambor (coluna 10) - somaPeso / somaTambores
+                var mediaPesoTambor = somaTambores > 0 ? (somaPeso / somaTambores).toFixed(2) : 0;
+                // Atualiza footer
+                $(api.column(7).footer()).html(somaTambores);
+                $(api.column(9).footer()).html(somaPeso.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+                $(api.column(10).footer()).html(mediaPesoTambor);
+            }
         });
     });
 </script>

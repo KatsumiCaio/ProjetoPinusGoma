@@ -357,13 +357,15 @@ def entrada_carga():
         motorista = request.form['motorista'].strip()
         placa = request.form['placa'].strip().upper()
         quantidade_tambores = request.form['quantidade_tambores']
+        pedido_compra = request.form.get('pedido_compra', '').strip()
+        categoria = request.form.get('categoria', '').strip()
         especie_resina = request.form['especie_resina']
         lote = request.form['lote'].strip()
         ticket_pesagem = request.form['ticket_pesagem'].strip()
         peso_liquido = request.form['peso_liquido']
 
         if not all([fornecedor, data_entrada, motorista, placa, quantidade_tambores, especie_resina, lote, ticket_pesagem, peso_liquido]):
-            flash('❌ Todos os campos são obrigatórios!', 'error')
+            flash('❌ Todos os campos obrigatórios devem ser preenchidos!', 'error')
             return render_template('entrada_carga.html')
 
         try:
@@ -383,6 +385,8 @@ def entrada_carga():
             'motorista': motorista,
             'placa': placa,
             'quantidade_tambores': quantidade_tambores,
+            'pedido_compra': pedido_compra,
+            'categoria': categoria,
             'especie_resina': especie_resina,
             'lote': lote,
             'ticket_pesagem': ticket_pesagem,
