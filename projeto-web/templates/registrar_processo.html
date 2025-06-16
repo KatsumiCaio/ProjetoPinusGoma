@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Processo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 2.5rem auto 0 auto;
+            padding: 2rem 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        h2 {
+            color: #2d5a27;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d5a27;
+            font-weight: 600;
+        }
+        select, input[type="file"] {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #a8c68f;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .btn {
+            background: linear-gradient(135deg, #6b8e23 0%, #4a7c59 50%, #2d5016 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.13);
+        }
+        .btn:hover {
+            background: linear-gradient(135deg, #7ba428 0%, #5a8c69 50%, #3d6020 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Registrar Processo por Lote</h2>
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="lote">Selecione o Lote:</label>
+                <select name="lote" id="lote" required>
+                    <option value="">Selecione...</option>
+                    {% for lote in lotes %}
+                        <option value="{{ lote }}">{{ lote }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="pdfs">Anexar PDF(s) do Processo:</label>
+                <input type="file" name="pdfs" id="pdfs" accept="application/pdf" multiple required>
+            </div>
+            <button type="submit" class="btn">Registrar Processo</button>
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="alerts">
+                {% for category, message in messages %}
+                    <li class="alert alert-{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+    </div>
+</body>
+</html>

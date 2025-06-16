@@ -124,6 +124,7 @@
                         <th>Peso Líquido (kg)</th>
                         <th>Data Registro</th>
                         <th>Usuário</th>
+                        <th>PDF</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -140,6 +141,9 @@
                         <td>{{ entrada.peso_liquido }}</td>
                         <td>{{ entrada.data_registro }}</td>
                         <td>{{ entrada.usuario_registro }}</td>
+                        <td>
+                            <a href="{{ url_for('visualizar_pdfs_lote', lote=entrada.lote) }}" class="btn" style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">PDF</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 import logging
 import sqlite3
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'florestal_secret_key_2024'  # Mude para uma chave mais segura em produção
@@ -108,7 +109,11 @@ def user_exists(username):
             return True
     return False
 
-# Função para inicializar o banco de dados e criar a tabela se não existir
+# Criação da tabela de processos vinculados a lotes e arquivos PDF
+PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'processos_pdfs')
+if not os.path.exists(PROCESSOS_DIR):
+    os.makedirs(PROCESSOS_DIR)
+
 def init_db():
     conn = sqlite3.connect('estoque.db')
     cursor = conn.cursor()
@@ -126,6 +131,21 @@ def init_db():
             peso_liquido REAL NOT NULL,
             data_registro TEXT NOT NULL,
             usuario_registro TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def init_db_processos():
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS processos_lote (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            lote TEXT NOT NULL,
+            arquivo_pdf TEXT NOT NULL,
+            data_upload TEXT NOT NULL,
+            usuario TEXT NOT NULL
         )
     ''')
     conn.commit()
@@ -219,55 +239,45 @@ def menu():
 
 @app.route('/registrar-processo', methods=['GET', 'POST'])
 def registrar_processo():
-    """Página para registrar novos processos"""
     if 'logged_in' not in session or not session['logged_in']:
         flash('🔒 Você precisa fazer login primeiro!', 'error')
         return redirect(url_for('login'))
-    
+
+    # Buscar lotes distintos já cadastrados
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT lote FROM entradas_carga ORDER BY lote ASC')
+    lotes = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
     if request.method == 'POST':
-        # Coleta dados do formulário
-        numero_processo = request.form['numero_processo']
-        tipo_processo = request.form['tipo_processo']
-        descricao = request.form['descricao']
-        localizacao = request.form['localizacao']
-        area_hectares = request.form['area_hectares']
-        
-        # Validação básica
-        if not all([numero_processo, tipo_processo, descricao, localizacao, area_hectares]):
-            flash('❌ Todos os campos são obrigatórios!', 'error')
-            return render_template('registrar_processo.html')
-        
-        # Carrega processos existentes
-        processos = load_processos()
-        
-        # Verifica se o número do processo já existe
-        for processo in processos:
-            if processo['numero_processo'] == numero_processo:
-                flash('❌ Número de processo já existe!', 'error')
-                return render_template('registrar_processo.html')
-        
-        # Cria novo processo
-        novo_processo = {
-            'id': len(processos) + 1,
-            'numero_processo': numero_processo,
-            'tipo_processo': tipo_processo,
-            'descricao': descricao,
-            'localizacao': localizacao,
-            'area_hectares': float(area_hectares),
-            'data_registro': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-            'usuario_registro': session['username'],
-            'status': 'Em Análise'
-        }
-        
-        # Adiciona à lista e salva
-        processos.append(novo_processo)
-        if save_processos(processos):
-            flash('✅ Processo registrado com sucesso!', 'success')
-            return redirect(url_for('menu'))
-        else:
-            flash('❌ Erro ao salvar processo!', 'error')
-    
-    return render_template('registrar_processo.html')
+        lote = request.form.get('lote')
+        arquivos = request.files.getlist('pdfs')
+        usuario = session.get('username', 'desconhecido')
+        erros = []
+        salvos = []
+        for arquivo in arquivos:
+            if arquivo and arquivo.filename.endswith('.pdf'):
+                nome_seguro = secure_filename(f"{lote}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{arquivo.filename}")
+                caminho = os.path.join(PROCESSOS_DIR, nome_seguro)
+                arquivo.save(caminho)
+                # Registrar no banco
+                conn = sqlite3.connect('estoque.db')
+                cursor = conn.cursor()
+                cursor.execute('''INSERT INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
+                               (lote, nome_seguro, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
+                conn.commit()
+                conn.close()
+                salvos.append(nome_seguro)
+            else:
+                erros.append(arquivo.filename)
+        if salvos:
+            flash(f'✅ {len(salvos)} PDF(s) vinculado(s) ao lote {lote} com sucesso!', 'success')
+        if erros:
+            flash(f'❌ Os arquivos a seguir não foram salvos por não serem PDF: {", ".join(erros)}', 'error')
+        return redirect(url_for('registrar_processo'))
+
+    return render_template('registrar_processo.html', lotes=lotes)
 
 @app.route('/cadastrar-usuario', methods=['GET', 'POST'])
 def cadastrar_usuario():
@@ -391,6 +401,18 @@ def encontrar_processo():
     if 'logged_in' not in session or not session['logged_in']:
         return redirect(url_for('login'))
     return "<h1>🚧 Página em construção - Encontrar Processo</h1><a href='/menu'>Voltar ao Menu</a>"
+
+@app.route('/visualizar-pdfs/<lote>')
+def visualizar_pdfs_lote(lote):
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('🔒 Você precisa fazer login primeiro!', 'error')
+        return redirect(url_for('login'))
+    conn = sqlite3.connect('estoque.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT arquivo_pdf, data_upload, usuario FROM processos_lote WHERE lote = ?', (lote,))
+    pdfs = cursor.fetchall()
+    conn.close()
+    return render_template('visualizar_pdfs_lote.html', lote=lote, pdfs=pdfs)
 
 if __name__ == '__main__':
     import os
