@@ -4,6 +4,75 @@
     <meta charset="UTF-8" />
     <title>Login - Sistema Florestal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 5vh auto 0 auto;
+            background: rgba(255,255,255,0.97);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(45, 80, 22, 0.18);
+            padding: 2.5rem 2rem 2rem 2rem;
+            text-align: center;
+        }
+        .login-container h2 {
+            color: #2d5a27;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .alerts {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.7rem;
+            font-weight: 500;
+            border-left: 4px solid #6b8e23;
+            background: #d4f6d4;
+            color: #2d5016;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+        label {
+            text-align: left;
+            color: #2d5a27;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        input[type="text"], input[type="password"] {
+            padding: 0.9rem;
+            border: 1.5px solid #a8c68f;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #f8fff8;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: #6b8e23;
+            outline: none;
+        }
+        button[type="submit"] {
+            background: linear-gradient(135deg, #6b8e23 0%, #4a7c59 50%, #2d5016 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.13);
+        }
+        button[type="submit"]:hover {
+            background: linear-gradient(135deg, #7ba428 0%, #5a8c69 50%, #3d6020 100%);
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
@@ -12,16 +81,20 @@
           {% if messages %}
             <ul class="alerts">
               {% for category, message in messages %}
-                <li class="alert {{ category }}">{{ message }}</li>
+                <li class="alert alert-{{ category }}">{{ message }}</li>
               {% endfor %}
             </ul>
           {% endif %}
         {% endwith %}
         <form method="POST" action="{{ url_for('login') }}">
-            <label for="username">Usuário:</label>
-            <input type="text" id="username" name="username" required />
-            <label for="password">Senha:</label>
-            <input type="password" id="password" name="password" required />
+            <div>
+                <label for="username">Usuário:</label>
+                <input type="text" id="username" name="username" required />
+            </div>
+            <div>
+                <label for="password">Senha:</label>
+                <input type="password" id="password" name="password" required />
+            </div>
             <button type="submit">Entrar</button>
         </form>
     </div>
