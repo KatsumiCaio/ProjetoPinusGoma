@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,36 +13,42 @@
             padding: 2rem 1.5rem;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
         }
+
         h2 {
             color: #2d5a27;
             margin-bottom: 1.5rem;
             text-align: center;
         }
+
         ul {
             list-style: none;
             padding: 0;
         }
+
         li {
             margin-bottom: 1.2rem;
             background: #f7faf7;
             padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
+
         .pdf-link {
             color: #4a7c59;
             text-decoration: underline;
             font-weight: 600;
         }
+
         .pdf-meta {
             font-size: 0.95rem;
             color: #888;
         }
+
         .back-btn {
             display: inline-block;
             margin-bottom: 1.5rem;
@@ -52,11 +59,13 @@
             border-radius: 5px;
             font-size: 1rem;
         }
+
         .back-btn:hover {
             background: #545b62;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <a href="{{ url_for('relatorio_entradas') }}" class="back-btn">← Voltar ao Relatório</a>
@@ -65,14 +74,21 @@
         <ul>
             {% for pdf, data_upload, usuario in pdfs %}
             <li>
-                <a class="pdf-link" href="{{ url_for('static', filename='../projeto-web/processos_pdfs/' + pdf) }}" target="_blank">{{ pdf }}</a>
+                <a class="pdf-link" href="{{ url_for('static', filename='../projeto-web/processos_pdfs/' + pdf) }}"
+                    target="_blank">{{ pdf }}</a>
                 <span class="pdf-meta">Enviado por {{ usuario }} em {{ data_upload }}</span>
             </li>
             {% endfor %}
+            <li>
+                <a class="pdf-link" href="{{ url_for('baixar_pdf_lote', lote=lote) }}" target="_blank">Ver PDF Final</a>
+                <span class="pdf-meta">Enviado por {{ pdfs[0][2] if pdfs else '' }} em {{ pdfs[0][1] if pdfs else ''
+                    }}</span>
+            </li>
         </ul>
         {% else %}
         <p style="text-align:center; color:#888;">Nenhum PDF vinculado a este lote.</p>
         {% endif %}
     </div>
 </body>
+
 </html>

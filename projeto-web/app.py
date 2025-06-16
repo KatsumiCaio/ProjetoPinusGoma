@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 import json
 import os
 from datetime import datetime
 import logging
 import sqlite3
 from werkzeug.utils import secure_filename
+from unir_pdfs import unir_pdfs
 
 app = Flask(__name__)
 app.secret_key = 'florestal_secret_key_2024'  # Mude para uma chave mais segura em produção
@@ -198,6 +199,9 @@ def listar_entradas():
     conn.close()
     return entradas
 
+UPLOAD_PDFS_DIR = os.path.join(os.path.dirname(__file__), 'processos_pdfs')
+TIPOS_PDF = ['capa', 'ticket', 'nota', 'contra', 'comprovante', 'extra']
+
 @app.route('/')
 def index():
     """Rota principal - redireciona para login ou menu"""
@@ -252,31 +256,36 @@ def registrar_processo():
     lotes = [row[0] for row in cursor.fetchall()]
     conn.close()
 
+    TIPOS = ['capa', 'ticket', 'nota', 'contra', 'comprovante', 'extra']
     if request.method == 'POST':
         lote = request.form.get('lote')
-        arquivos = request.files.getlist('pdfs')
         usuario = session.get('username', 'desconhecido')
-        erros = []
-        salvos = []
-        for arquivo in arquivos:
-            if arquivo and arquivo.filename.endswith('.pdf'):
-                nome_seguro = secure_filename(f"{lote}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{arquivo.filename}")
-                caminho = os.path.join(PROCESSOS_DIR, nome_seguro)
-                arquivo.save(caminho)
-                # Registrar no banco
-                conn = sqlite3.connect(DB_PATH)
-                cursor = conn.cursor()
-                cursor.execute('''INSERT INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
-                               (lote, nome_seguro, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
-                conn.commit()
-                conn.close()
-                salvos.append(nome_seguro)
-            else:
-                erros.append(arquivo.filename)
-        if salvos:
-            flash(f'✅ {len(salvos)} PDF(s) vinculado(s) ao lote {lote} com sucesso!', 'success')
-        if erros:
-            flash(f'❌ Os arquivos a seguir não foram salvos por não serem PDF: {", ".join(erros)}', 'error')
+        arquivos_temp = []
+        for tipo in TIPOS:
+            file = request.files.get(f'pdf_{tipo}')
+            if file and file.filename:
+                nome_temp = secure_filename(f"{lote}_{tipo}_temp.pdf")
+                caminho_temp = os.path.join(PROCESSOS_DIR, nome_temp)
+                file.save(caminho_temp)
+                arquivos_temp.append(caminho_temp)
+        if arquivos_temp:
+            nome_final = secure_filename(f"{lote}_final.pdf")
+            caminho_final = os.path.join(PROCESSOS_DIR, nome_final)
+            unir_pdfs(arquivos_temp, caminho_final)
+            # Limpa arquivos temporários
+            for arq in arquivos_temp:
+                if os.path.exists(arq):
+                    os.remove(arq)
+            # Registrar no banco
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute('''INSERT INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
+                           (lote, nome_final, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
+            conn.commit()
+            conn.close()
+            flash(f'✅ PDF final gerado e vinculado ao lote {lote} com sucesso!', 'success')
+        else:
+            flash('❌ Nenhum arquivo PDF enviado!', 'error')
         return redirect(url_for('registrar_processo'))
 
     return render_template('registrar_processo.html', lotes=lotes)
@@ -415,6 +424,47 @@ def visualizar_pdfs_lote(lote):
     pdfs = cursor.fetchall()
     conn.close()
     return render_template('visualizar_pdfs_lote.html', lote=lote, pdfs=pdfs)
+
+@app.route('/upload-pdfs/<lote>', methods=['GET', 'POST'])
+def upload_pdfs(lote):
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('🔒 Você precisa fazer login primeiro!', 'error')
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        usuario = session.get('username', 'desconhecido')
+        for tipo in TIPOS_PDF:
+            file = request.files.get(f'pdf_{tipo}')
+            if file and file.filename:
+                filename = f"{lote}_{tipo}.pdf"
+                file.save(os.path.join(UPLOAD_PDFS_DIR, filename))
+                # Opcional: registrar no banco se quiser rastrear uploads
+        flash('✅ PDFs enviados com sucesso!', 'success')
+        return redirect(url_for('ver_pdfs', lote=lote))
+    return render_template('upload.html')
+
+@app.route('/ver-pdfs/<lote>')
+def ver_pdfs(lote):
+    links = []
+    for tipo in TIPOS_PDF:
+        filename = f"{lote}_{tipo}.pdf"
+        path = os.path.join(UPLOAD_PDFS_DIR, filename)
+        if os.path.exists(path):
+            links.append((tipo.capitalize(), url_for('abrir_pdf', lote=lote, tipo=tipo)))
+    return render_template('ver_pdfs.html', links=links)
+
+@app.route('/abrir-pdf/<lote>/<tipo>')
+def abrir_pdf(lote, tipo):
+    filename = f"{lote}_{tipo}.pdf"
+    return send_from_directory(UPLOAD_PDFS_DIR, filename)
+
+@app.route('/baixar-pdf-lote/<lote>')
+def baixar_pdf_lote(lote):
+    nome_final = f"{lote}_final.pdf"
+    caminho = os.path.join(PROCESSOS_DIR, nome_final)
+    if os.path.exists(caminho):
+        return send_from_directory(PROCESSOS_DIR, nome_final)
+    flash('PDF final não encontrado para este lote.', 'error')
+    return redirect(url_for('relatorio_entradas'))
 
 if __name__ == '__main__':
     import os

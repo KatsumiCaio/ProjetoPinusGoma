@@ -1,85 +1,76 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrar Processo</title>
+    <title>Registrar Processo - Pinus Brasil</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .container {
-            max-width: 600px;
-            margin: 2.5rem auto 0 auto;
-            padding: 2rem 1.5rem;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        }
-        h2 {
-            color: #2d5a27;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #2d5a27;
-            font-weight: 600;
-        }
-        select, input[type="file"] {
-            width: 100%;
-            padding: 0.7rem;
-            border: 1px solid #a8c68f;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .btn {
-            background: linear-gradient(135deg, #6b8e23 0%, #4a7c59 50%, #2d5016 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(45, 80, 22, 0.13);
-        }
-        .btn:hover {
-            background: linear-gradient(135deg, #7ba428 0%, #5a8c69 50%, #3d6020 100%);
-        }
-    </style>
 </head>
-<body>
+
+<body class="with-navbar">
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="navbar-brand">Pinus Brasil - Indústria de Goma Resina</div>
+            <div class="navbar-user">
+                <span>🌲 Bem-vindo, {{ session.get('username', 'Usuário') }}!</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-logout" onclick="return confirm('Deseja realmente sair?')">🚪 Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+    <a href="{{ url_for('menu') }}" class="btn"
+        style="margin-bottom: 1.5rem; background: #6c757d; color: white; width: auto; display: inline-block;">←
+        Voltar ao Menu</a>
     <div class="container">
-        <h2>Registrar Processo por Lote</h2>
+        <h2 style="color:#2d5016;">Registrar Processo por Lote</h2>
         <form method="POST" enctype="multipart/form-data">
             <div class="form-group">
                 <label for="lote">Selecione o Lote:</label>
                 <select name="lote" id="lote" required>
                     <option value="">Selecione...</option>
                     {% for lote in lotes %}
-                        <option value="{{ lote }}">{{ lote }}</option>
+                    <option value="{{ lote }}">{{ lote }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <label for="pdfs">Anexar PDF(s) do Processo:</label>
-                <input type="file" name="pdfs" id="pdfs" accept="application/pdf" multiple required>
+                <label for="pdf_capa">Capa:</label>
+                <input type="file" name="pdf_capa" id="pdf_capa" accept="application/pdf">
+            </div>
+            <div class="form-group">
+                <label for="pdf_ticket">Ticket Pesagem:</label>
+                <input type="file" name="pdf_ticket" id="pdf_ticket" accept="application/pdf">
+            </div>
+            <div class="form-group">
+                <label for="pdf_nota">Nota Fiscal:</label>
+                <input type="file" name="pdf_nota" id="pdf_nota" accept="application/pdf">
+            </div>
+            <div class="form-group">
+                <label for="pdf_contra">Contra Nota:</label>
+                <input type="file" name="pdf_contra" id="pdf_contra" accept="application/pdf">
+            </div>
+            <div class="form-group">
+                <label for="pdf_comprovante">Comprovante:</label>
+                <input type="file" name="pdf_comprovante" id="pdf_comprovante" accept="application/pdf">
+            </div>
+            <div class="form-group">
+                <label for="pdf_extra">Extra:</label>
+                <input type="file" name="pdf_extra" id="pdf_extra" accept="application/pdf">
             </div>
             <button type="submit" class="btn">Registrar Processo</button>
         </form>
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <ul class="alerts">
-                {% for category, message in messages %}
-                    <li class="alert alert-{{ category }}">{{ message }}</li>
-                {% endfor %}
-                </ul>
-            {% endif %}
+        {% if messages %}
+        <ul class="alerts">
+            {% for category, message in messages %}
+            <li class="alert alert-{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
         {% endwith %}
     </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>
