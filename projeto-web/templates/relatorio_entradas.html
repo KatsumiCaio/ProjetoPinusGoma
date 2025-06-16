@@ -6,10 +6,11 @@
     <title>Relatório de Entradas de Carga</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        body {
+        /* Sobrescreve o display flex do body global apenas nesta página */
+        body.relatorio-body {
+            display: block !important;
             background: #f7faf7;
-            margin: 0;
-            padding: 0;
+            min-height: 100vh;
         }
         .header {
             background: #2d5a27;
@@ -43,7 +44,7 @@
             background: #545b62;
         }
         .container {
-            max-width: 1200px;
+            max-width: 1200px !important;
             margin: 2.5rem auto 0 auto;
             padding: 1.5rem 1rem;
             background: white;
@@ -52,20 +53,23 @@
         }
         .table-responsive {
             overflow-x: auto;
+            width: 100%;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 0.5rem;
             font-size: 1rem;
-            min-width: 900px;
+            max-width: 100%;
+            table-layout: auto;
         }
         th, td {
             border: 1px solid #e0e0e0;
             padding: 0.5rem 0.3rem;
             text-align: center;
             vertical-align: middle;
-            white-space: nowrap;
+            white-space: normal;
+            word-wrap: break-word;
         }
         th {
             background: #4a7c59;
@@ -89,15 +93,16 @@
                 padding: 0.2rem;
             }
             table, th, td {
-                font-size: 0.85rem;
+                font-size: 0.75rem;
             }
             th, td {
-                padding: 0.3rem 0.2rem;
+                padding: 0.2rem 0.2rem;
+                white-space: normal;
             }
         }
     </style>
 </head>
-<body>
+<body class="relatorio-body">
     <div class="header">
         <a href="{{ url_for('menu') }}" class="back-btn">← Voltar ao Menu</a>
         <div class="header-title">📋 Relatório de Entradas de Carga</div>
@@ -105,40 +110,40 @@
     <div class="container">
         {% if entradas %}
         <div class="table-responsive">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fornecedor</th>
-                    <th>Data Entrada</th>
-                    <th>Motorista</th>
-                    <th>Placa</th>
-                    <th>Qtd. Tambores</th>
-                    <th>Espécie Resina</th>
-                    <th>Lote</th>
-                    <th>Ticket Pesagem</th>
-                    <th>Peso Líquido (kg)</th>
-                    <th>Data Registro</th>
-                    <th>Usuário</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for entrada in entradas %}
-                <tr>
-                    <td>{{ entrada.fornecedor }}</td>
-                    <td>{{ entrada.data_entrada }}</td>
-                    <td>{{ entrada.motorista }}</td>
-                    <td>{{ entrada.placa }}</td>
-                    <td>{{ entrada.quantidade_tambores }}</td>
-                    <td>{{ entrada.especie_resina }}</td>
-                    <td>{{ entrada.lote }}</td>
-                    <td>{{ entrada.ticket_pesagem }}</td>
-                    <td>{{ entrada.peso_liquido }}</td>
-                    <td>{{ entrada.data_registro }}</td>
-                    <td>{{ entrada.usuario_registro }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Data Entrada</th>
+                        <th>Motorista</th>
+                        <th>Placa</th>
+                        <th>Qtd. Tambores</th>
+                        <th>Espécie Resina</th>
+                        <th>Lote</th>
+                        <th>Ticket Pesagem</th>
+                        <th>Peso Líquido (kg)</th>
+                        <th>Data Registro</th>
+                        <th>Usuário</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entrada in entradas %}
+                    <tr>
+                        <td>{{ entrada.fornecedor }}</td>
+                        <td>{{ entrada.data_entrada }}</td>
+                        <td>{{ entrada.motorista }}</td>
+                        <td>{{ entrada.placa }}</td>
+                        <td>{{ entrada.quantidade_tambores }}</td>
+                        <td>{{ entrada.especie_resina }}</td>
+                        <td>{{ entrada.lote }}</td>
+                        <td>{{ entrada.ticket_pesagem }}</td>
+                        <td>{{ entrada.peso_liquido }}</td>
+                        <td>{{ entrada.data_registro }}</td>
+                        <td>{{ entrada.usuario_registro }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% else %}
         <p style="text-align:center; color:#888;">Nenhuma entrada de carga registrada.</p>
@@ -146,3 +151,12 @@
     </div>
 </body>
 </html>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const backBtn = document.querySelector('.back-btn');
+        backBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+            window.history.back();
+        });
+    });
+</script>

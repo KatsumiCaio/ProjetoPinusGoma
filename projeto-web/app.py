@@ -393,12 +393,12 @@ def encontrar_processo():
     return "<h1>🚧 Página em construção - Encontrar Processo</h1><a href='/menu'>Voltar ao Menu</a>"
 
 if __name__ == '__main__':
-    print("🌲 Iniciando Sistema Florestal...")
-    print("📋 Usuários disponíveis:")
-    users = load_users()
-    for user in users:
-        print(f"   👤 {user['username']} / 🔒 {user['password']}")
-    print("🌐 Acesse: http://localhost:5000")
-    init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    if not os.path.exists('estoque.db'):
+        print("Banco de dados não encontrado. Criando banco e tabelas...")
+        init_db()
+        print("Banco criado com sucesso.")
+    else:
+        print("Banco de dados encontrado.")
 
+    app.run(debug=True)
