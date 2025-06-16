@@ -114,8 +114,10 @@ PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'processos_pdfs')
 if not os.path.exists(PROCESSOS_DIR):
     os.makedirs(PROCESSOS_DIR)
 
+DB_PATH = os.path.join(os.path.dirname(__file__), 'estoque.db')
+
 def init_db():
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS entradas_carga (
@@ -137,7 +139,7 @@ def init_db():
     conn.close()
 
 def init_db_processos():
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS processos_lote (
@@ -152,7 +154,7 @@ def init_db_processos():
     conn.close()
 
 def inserir_entrada_carga(entrada):
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     try:
         cursor.execute('''
@@ -180,7 +182,7 @@ def inserir_entrada_carga(entrada):
         conn.close()
 
 def ticket_existe(ticket_pesagem):
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT 1 FROM entradas_carga WHERE ticket_pesagem = ?', (ticket_pesagem,))
     existe = cursor.fetchone() is not None
@@ -188,7 +190,7 @@ def ticket_existe(ticket_pesagem):
     return existe
 
 def listar_entradas():
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM entradas_carga ORDER BY lote ASC')
     colunas = [desc[0] for desc in cursor.description]
@@ -244,7 +246,7 @@ def registrar_processo():
         return redirect(url_for('login'))
 
     # Buscar lotes distintos já cadastrados
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT lote FROM entradas_carga ORDER BY lote ASC')
     lotes = [row[0] for row in cursor.fetchall()]
@@ -262,7 +264,7 @@ def registrar_processo():
                 caminho = os.path.join(PROCESSOS_DIR, nome_seguro)
                 arquivo.save(caminho)
                 # Registrar no banco
-                conn = sqlite3.connect('estoque.db')
+                conn = sqlite3.connect(DB_PATH)
                 cursor = conn.cursor()
                 cursor.execute('''INSERT INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
                                (lote, nome_seguro, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
@@ -407,7 +409,7 @@ def visualizar_pdfs_lote(lote):
     if 'logged_in' not in session or not session['logged_in']:
         flash('🔒 Você precisa fazer login primeiro!', 'error')
         return redirect(url_for('login'))
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT arquivo_pdf, data_upload, usuario FROM processos_lote WHERE lote = ?', (lote,))
     pdfs = cursor.fetchall()
@@ -416,11 +418,14 @@ def visualizar_pdfs_lote(lote):
 
 if __name__ == '__main__':
     import os
-    if not os.path.exists('estoque.db'):
+    if not os.path.exists(DB_PATH):
         print("Banco de dados não encontrado. Criando banco e tabelas...")
         init_db()
+        init_db_processos()
         print("Banco criado com sucesso.")
     else:
         print("Banco de dados encontrado.")
+        # Garante que a tabela de processos existe mesmo se o banco já existir
+        init_db_processos()
 
     app.run(debug=True)
