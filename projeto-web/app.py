@@ -160,14 +160,16 @@ def inserir_entrada_carga(entrada):
     try:
         cursor.execute('''
             INSERT INTO entradas_carga (
-                fornecedor, data_entrada, motorista, placa, quantidade_tambores, especie_resina, lote, ticket_pesagem, peso_liquido, data_registro, usuario_registro
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                fornecedor, data_entrada, motorista, placa, quantidade_tambores, pedido_compra, categoria, especie_resina, lote, ticket_pesagem, peso_liquido, data_registro, usuario_registro
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             entrada['fornecedor'],
             entrada['data_entrada'],
             entrada['motorista'],
             entrada['placa'],
             entrada['quantidade_tambores'],
+            entrada['pedido_compra'],
+            entrada['categoria'],
             entrada['especie_resina'],
             entrada['lote'],
             entrada['ticket_pesagem'],
