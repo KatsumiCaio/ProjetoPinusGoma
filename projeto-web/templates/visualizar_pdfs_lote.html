@@ -63,6 +63,70 @@
         .back-btn:hover {
             background: #545b62;
         }
+
+        /* Estilos do Modal */
+        #pdfModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #pdfModal>div {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            min-width: 300px;
+            max-width: 90vw;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        #pdfModal button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        #modalPdfName {
+            margin-bottom: 1.5rem;
+        }
+
+        #pdfModal a {
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 1rem;
+        }
+
+        #btnVerFinal {
+            background: #4a7c59;
+            color: white;
+        }
+
+        #btnVerFinal:hover {
+            background: #3b6b47;
+        }
+
+        #btnEditar {
+            background: #f0ad4e;
+            color: white;
+        }
+
+        #btnEditar:hover {
+            background: #ec971f;
+        }
     </style>
 </head>
 
@@ -74,21 +138,43 @@
         <ul>
             {% for pdf, data_upload, usuario in pdfs %}
             <li>
-                <a class="pdf-link" href="{{ url_for('static', filename='../projeto-web/processos_pdfs/' + pdf) }}"
-                    target="_blank">{{ pdf }}</a>
+                <button class="pdf-link" onclick="openModal('{{ pdf }}')">{{ pdf }}</button>
                 <span class="pdf-meta">Enviado por {{ usuario }} em {{ data_upload }}</span>
             </li>
             {% endfor %}
-            <li>
-                <a class="pdf-link" href="{{ url_for('baixar_pdf_lote', lote=lote) }}" target="_blank">Ver PDF Final</a>
-                <span class="pdf-meta">Enviado por {{ pdfs[0][2] if pdfs else '' }} em {{ pdfs[0][1] if pdfs else ''
-                    }}</span>
-            </li>
         </ul>
         {% else %}
         <p style="text-align:center; color:#888;">Nenhum PDF vinculado a este lote.</p>
         {% endif %}
     </div>
+
+    <!-- Modal -->
+    <div id="pdfModal"
+        style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div
+            style="background:white; padding:2rem; border-radius:10px; min-width:300px; max-width:90vw; box-shadow:0 2px 8px rgba(0,0,0,0.2); position:relative;">
+            <button onclick="closeModal()"
+                style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            <h3 id="modalPdfName" style="margin-bottom:1.5rem;"></h3>
+            <div style="display:flex; gap:1.5rem; justify-content:center;">
+                <a id="btnVerProcesso" class="pdf-link" href="#" target="_blank">Abrir PDF do Processo</a>
+                <a id="btnEditar" href="{{ url_for('registrar_processo') }}"
+                    style="padding:0.5rem 1rem; background:#f0ad4e; color:white; border-radius:5px; text-decoration:none; display:flex; align-items:center; gap:0.5rem;">
+                    <span style="font-size:1.2rem;">✏️</span> Editar PDF
+                </a>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openModal(pdf) {
+            document.getElementById('pdfModal').style.display = 'flex';
+            document.getElementById('modalPdfName').innerText = pdf;
+            document.getElementById('btnVerProcesso').href = "{{ url_for('abrir_pdf_nome', nome_arquivo='__PDF__') }}".replace('__PDF__', pdf);
+        }
+        function closeModal() {
+            document.getElementById('pdfModal').style.display = 'none';
+        }
+    </script>
 </body>
 
 </html>

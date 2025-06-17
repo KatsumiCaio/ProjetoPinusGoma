@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Entrada de Carga</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-title {
+            color: #2d5a27;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            background: #2d5a27;
+            color: white;
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-right: 1rem;
+        }
+
+        .btn:hover {
+            background: #1e3d1a;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="form-title">Editar Entrada de Carga</h2>
+        <form method="POST">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fornecedor">Fornecedor:</label>
+                    <input type="text" id="fornecedor" name="fornecedor" value="{{ entrada.fornecedor }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="data_entrada">Data da Entrada:</label>
+                    <input type="date" id="data_entrada" name="data_entrada" value="{{ entrada.data_entrada }}"
+                        required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="motorista">Motorista:</label>
+                    <input type="text" id="motorista" name="motorista" value="{{ entrada.motorista }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="placa">Placa do Veículo:</label>
+                    <input type="text" id="placa" name="placa" value="{{ entrada.placa }}" required maxlength="8">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="quantidade_tambores">Quantidade de Tambores:</label>
+                    <input type="number" id="quantidade_tambores" name="quantidade_tambores"
+                        value="{{ entrada.quantidade_tambores }}" required min="1">
+                </div>
+                <div class="form-group">
+                    <label for="pedido_compra">Pedido de Compra:</label>
+                    <input type="text" id="pedido_compra" name="pedido_compra" value="{{ entrada.pedido_compra }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="categoria">Categoria:</label>
+                    <input type="text" id="categoria" name="categoria" value="{{ entrada.categoria }}">
+                </div>
+                <div class="form-group">
+                    <label for="especie_resina">Espécie de Resina:</label>
+                    <select id="especie_resina" name="especie_resina" required>
+                        <option value="">Selecione a espécie</option>
+                        <option value="Elliotti" {% if entrada.especie_resina=='Elliotti' %}selected{% endif %}>Elliotti
+                        </option>
+                        <option value="Tropical" {% if entrada.especie_resina=='Tropical' %}selected{% endif %}>Tropical
+                        </option>
+                        <option value="Híbrida" {% if entrada.especie_resina=='Híbrida' %}selected{% endif %}>Híbrida
+                        </option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="lote">Lote:</label>
+                    <input type="text" id="lote" name="lote" value="{{ entrada.lote }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="ticket_pesagem">Nº Ticket de Pesagem:</label>
+                    <input type="text" id="ticket_pesagem" name="ticket_pesagem" value="{{ entrada.ticket_pesagem }}"
+                        required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="peso_liquido">Peso Líquido (kg):</label>
+                <input type="number" id="peso_liquido" name="peso_liquido" value="{{ entrada.peso_liquido }}" required
+                    min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="pdf">PDF (opcional):</label>
+                <input type="file" id="pdf" name="pdf" accept="application/pdf">
+                <small>Se quiser substituir o PDF atual, envie um novo arquivo.</small>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button type="submit" class="btn">💾 Salvar Alterações</button>
+                <a href="{{ url_for('relatorio_entradas') }}" class="btn btn-secondary">❌ Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>

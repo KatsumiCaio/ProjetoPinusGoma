@@ -345,12 +345,20 @@ def cadastrar_usuario():
 
 # Rotas temporárias para as páginas (apenas para não dar erro 404)
 @app.route('/entrada-carga', methods=['GET', 'POST'])
-def entrada_carga():
-    """Página para registrar entrada de carga usando banco de dados"""
+@app.route('/entrada-carga/<int:id>', methods=['GET', 'POST'])
+def entrada_carga(id=None):
+    """Página para registrar ou editar entrada de carga usando banco de dados"""
     if 'logged_in' not in session or not session['logged_in']:
         flash('🔒 Você precisa fazer login primeiro!', 'error')
         return redirect(url_for('login'))
-
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    entrada = None
+    if id:
+        cursor.execute('SELECT * FROM entradas_carga WHERE id=?', (id,))
+        row = cursor.fetchone()
+        colunas = [desc[0] for desc in cursor.description]
+        entrada = dict(zip(colunas, row)) if row else None
     if request.method == 'POST':
         fornecedor = request.form['fornecedor'].strip()
         data_entrada = request.form['data_entrada']
@@ -363,46 +371,52 @@ def entrada_carga():
         lote = request.form['lote'].strip()
         ticket_pesagem = request.form['ticket_pesagem'].strip()
         peso_liquido = request.form['peso_liquido']
-
-        if not all([fornecedor, data_entrada, motorista, placa, quantidade_tambores, especie_resina, lote, ticket_pesagem, peso_liquido]):
-            flash('❌ Todos os campos obrigatórios devem ser preenchidos!', 'error')
-            return render_template('entrada_carga.html')
-
-        try:
-            quantidade_tambores = int(quantidade_tambores)
-            peso_liquido = float(peso_liquido)
-        except ValueError:
-            flash('❌ Quantidade de tambores deve ser um número inteiro e peso líquido um número válido!', 'error')
-            return render_template('entrada_carga.html')
-
-        if ticket_existe(ticket_pesagem):
-            flash('❌ Número do ticket de pesagem já existe!', 'error')
-            return render_template('entrada_carga.html')
-
-        nova_entrada = {
-            'fornecedor': fornecedor,
-            'data_entrada': data_entrada,
-            'motorista': motorista,
-            'placa': placa,
-            'quantidade_tambores': quantidade_tambores,
-            'pedido_compra': pedido_compra,
-            'categoria': categoria,
-            'especie_resina': especie_resina,
-            'lote': lote,
-            'ticket_pesagem': ticket_pesagem,
-            'peso_liquido': peso_liquido,
-            'data_registro': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
-            'usuario_registro': session['username']
-        }
-
-        if inserir_entrada_carga(nova_entrada):
-            flash('✅ Entrada de carga registrada com sucesso!', 'success')
-            return redirect(url_for('menu'))
+        # Verifica se o lote já existe (exceto se for edição do mesmo id)
+        cursor.execute('SELECT id FROM entradas_carga WHERE lote=?', (lote,))
+        lote_existente = cursor.fetchone()
+        if lote_existente and (not id or lote_existente[0] != id):
+            flash('❌ Esse lote já existe!', 'error')
+            if entrada:
+                conn.close()
+                return render_template('entrada_carga.html', entrada=entrada, editar=True)
+            else:
+                conn.close()
+                return render_template('entrada_carga.html', editar=False)
+        if id and entrada:
+            # Atualiza
+            cursor.execute('''UPDATE entradas_carga SET fornecedor=?, data_entrada=?, motorista=?, placa=?, quantidade_tambores=?, pedido_compra=?, categoria=?, especie_resina=?, ticket_pesagem=?, peso_liquido=? WHERE id=?''',
+                (fornecedor, data_entrada, motorista, placa, quantidade_tambores, pedido_compra, categoria, especie_resina, ticket_pesagem, peso_liquido, id))
+            conn.commit()
+            conn.close()
+            flash('✅ Entrada de carga atualizada com sucesso!', 'success')
+            return redirect(url_for('relatorio_entradas'))
         else:
-            flash('❌ Erro ao salvar entrada de carga! Ticket duplicado.', 'error')
-
-    return render_template('entrada_carga.html')
-
+            # Novo registro
+            nova_entrada = {
+                'fornecedor': fornecedor,
+                'data_entrada': data_entrada,
+                'motorista': motorista,
+                'placa': placa,
+                'quantidade_tambores': quantidade_tambores,
+                'pedido_compra': pedido_compra,
+                'categoria': categoria,
+                'especie_resina': especie_resina,
+                'lote': lote,
+                'ticket_pesagem': ticket_pesagem,
+                'peso_liquido': peso_liquido,
+                'data_registro': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
+                'usuario_registro': session['username']
+            }
+            if inserir_entrada_carga(nova_entrada):
+                conn.close()
+                flash('✅ Entrada de carga registrada com sucesso!', 'success')
+                return redirect(url_for('menu'))
+            else:
+                conn.close()
+                flash('❌ Erro ao salvar entrada de carga! Ticket duplicado.', 'error')
+                return render_template('entrada_carga.html', editar=False)
+    conn.close()
+    return render_template('entrada_carga.html', entrada=entrada, editar=bool(id))
 
 @app.route('/relatorio-entradas')
 def relatorio_entradas():
@@ -468,6 +482,82 @@ def baixar_pdf_lote(lote):
     if os.path.exists(caminho):
         return send_from_directory(PROCESSOS_DIR, nome_final)
     flash('PDF final não encontrado para este lote.', 'error')
+    return redirect(url_for('relatorio_entradas'))
+
+@app.route('/editar-entrada/<int:id>', methods=['GET', 'POST'])
+def editar_entrada(id):
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('🔒 Você precisa fazer login primeiro!', 'error')
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    if request.method == 'POST':
+        # Recebe os dados do formulário
+        fornecedor = request.form['fornecedor'].strip()
+        data_entrada = request.form['data_entrada']
+        motorista = request.form['motorista'].strip()
+        placa = request.form['placa'].strip().upper()
+        quantidade_tambores = request.form['quantidade_tambores']
+        pedido_compra = request.form.get('pedido_compra', '').strip()
+        categoria = request.form.get('categoria', '').strip()
+        especie_resina = request.form['especie_resina']
+        lote = request.form['lote'].strip()
+        ticket_pesagem = request.form['ticket_pesagem'].strip()
+        peso_liquido = request.form['peso_liquido']
+        # Atualiza no banco
+        cursor.execute('''UPDATE entradas_carga SET fornecedor=?, data_entrada=?, motorista=?, placa=?, quantidade_tambores=?, pedido_compra=?, categoria=?, especie_resina=?, lote=?, ticket_pesagem=?, peso_liquido=? WHERE id=?''',
+            (fornecedor, data_entrada, motorista, placa, quantidade_tambores, pedido_compra, categoria, especie_resina, lote, ticket_pesagem, peso_liquido, id))
+        conn.commit()
+        conn.close()
+        flash('✅ Entrada de carga atualizada com sucesso!', 'success')
+        return redirect(url_for('relatorio_entradas'))
+    # GET: busca dados atuais
+    cursor.execute('SELECT * FROM entradas_carga WHERE id=?', (id,))
+    row = cursor.fetchone()
+    colunas = [desc[0] for desc in cursor.description]
+    entrada = dict(zip(colunas, row)) if row else None
+    conn.close()
+    if not entrada:
+        flash('❌ Entrada não encontrada!', 'error')
+        return redirect(url_for('relatorio_entradas'))
+    return render_template('editar_entrada.html', entrada=entrada)
+
+@app.route('/editar-pdf/<int:id>', methods=['GET', 'POST'])
+def editar_pdf(id):
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('🔒 Você precisa fazer login primeiro!', 'error')
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM entradas_carga WHERE id=?', (id,))
+    row = cursor.fetchone()
+    colunas = [desc[0] for desc in cursor.description]
+    entrada = dict(zip(colunas, row)) if row else None
+    if not entrada:
+        conn.close()
+        flash('❌ Entrada não encontrada!', 'error')
+        return redirect(url_for('relatorio_entradas'))
+    if request.method == 'POST':
+        if 'pdf' in request.files and request.files['pdf'].filename:
+            pdf = request.files['pdf']
+            filename = secure_filename(f"{entrada['lote']}_{entrada['ticket_pesagem']}.pdf")
+            pdf_path = os.path.join('processos_pdfs', filename)
+            pdf.save(os.path.join(os.path.dirname(__file__), pdf_path))
+            # Aqui você pode atualizar o campo do PDF no banco se desejar
+            flash('✅ PDF atualizado com sucesso!', 'success')
+        else:
+            flash('❌ Nenhum arquivo PDF selecionado!', 'error')
+        conn.close()
+        return redirect(url_for('relatorio_entradas'))
+    conn.close()
+    return render_template('editar_pdf.html', entrada=entrada)
+
+@app.route('/abrir-pdf/<nome_arquivo>')
+def abrir_pdf_nome(nome_arquivo):
+    caminho = os.path.join(PROCESSOS_DIR, nome_arquivo)
+    if os.path.exists(caminho):
+        return send_from_directory(PROCESSOS_DIR, nome_arquivo)
+    flash('PDF não encontrado.', 'error')
     return redirect(url_for('relatorio_entradas'))
 
 if __name__ == '__main__':

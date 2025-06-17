@@ -154,6 +154,21 @@
                         <th>Categoria</th>
                         <th>PDF</th>
                     </tr>
+                    <tr class="filters">
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody>
                     {% for entrada in entradas %}
@@ -172,8 +187,12 @@
                         <td>{{ entrada.especie_resina }}</td>
                         <td>{{ entrada.categoria or '' }}</td>
                         <td>
-                            <a href="{{ url_for('visualizar_pdfs_lote', lote=entrada.lote) }}" class="btn"
-                                style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">PDF</a>
+                            <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
+                                style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none; margin-right:0.5rem;">PDF</a>
+                            <a href="{{ url_for('entrada_carga', id=entrada.id) }}" class="btn" title="Editar"
+                                style="padding:0.4rem 0.8rem; font-size:1.1rem; background:#ffc107; color:#333; border-radius:6px; text-decoration:none;">
+                                ✏️
+                            </a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -204,16 +223,22 @@
             event.preventDefault();
             window.history.back();
         });
-        // DataTables com filtro tipo Excel (dropdown por coluna) e somatórios
-        $('#tabela-entradas').DataTable({
+        // DataTables com filtros no topo e ordenação
+        var table = $('#tabela-entradas').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
             },
+            orderCellsTop: true,
+            fixedHeader: true,
             initComplete: function () {
-                this.api().columns().every(function () {
+                var api = this.api();
+                api.columns().every(function (colIdx) {
                     var column = this;
+                    var header = $(api.column(colIdx).header());
+                    var cell = $('.filters th').eq(colIdx);
+                    if (colIdx === 12) return; // Não filtra PDF
                     var select = $('<select><option value="">Todos</option></select>')
-                        .appendTo($(column.footer()).empty())
+                        .appendTo(cell.empty())
                         .on('change', function () {
                             var val = $.fn.dataTable.util.escapeRegex($(this).val());
                             column.search(val ? '^' + val + '$' : '', true, false).draw();
@@ -227,17 +252,13 @@
             },
             footerCallback: function (row, data, start, end, display) {
                 var api = this.api();
-                // Soma Qtd. Tambores (coluna 7)
                 var somaTambores = api.column(7, { search: 'applied' }).data().reduce(function (a, b) {
                     return (parseInt(a) || 0) + (parseInt(b) || 0);
                 }, 0);
-                // Soma Peso Líquido (coluna 9)
                 var somaPeso = api.column(9, { search: 'applied' }).data().reduce(function (a, b) {
                     return (parseFloat(a) || 0) + (parseFloat(b) || 0);
                 }, 0);
-                // Média Peso por Tambor (coluna 10) - somaPeso / somaTambores
                 var mediaPesoTambor = somaTambores > 0 ? (somaPeso / somaTambores).toFixed(2) : 0;
-                // Atualiza footer
                 $(api.column(7).footer()).html(somaTambores);
                 $(api.column(9).footer()).html(somaPeso.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
                 $(api.column(10).footer()).html(mediaPesoTambor);
