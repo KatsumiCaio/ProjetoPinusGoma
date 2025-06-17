@@ -178,14 +178,14 @@
                         <td>{{ entrada.placa }}</td>
                         <td>{{ entrada.motorista }}</td>
                         <td>{{ entrada.ticket_pesagem }}</td>
-                        <td>{{ entrada.pedido_compra or '' }}</td>
+                        <td>{{ entrada.pedido_compra or '-' }}</td>
                         <td>{{ entrada.fornecedor }}</td>
                         <td>{{ entrada.quantidade_tambores }}</td>
                         <td>{{ entrada.peso_liquido }}</td>
                         <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido /
                             entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
                         <td>{{ entrada.especie_resina }}</td>
-                        <td>{{ entrada.categoria or '' }}</td>
+                        <td>{{ entrada.categoria or '-' }}</td>
                         <td>
                             {% if entrada.lote in lotes_pdfs %}
                             <div style="display: flex; gap: 0.5rem; justify-content: center;">

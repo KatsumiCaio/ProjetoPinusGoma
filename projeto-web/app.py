@@ -200,7 +200,7 @@ def listar_entradas():
     return entradas
 
 UPLOAD_PDFS_DIR = os.path.join(os.path.dirname(__file__), 'processos_pdfs')
-TIPOS_PDF = ['capa', 'ticket', 'nota', 'contra', 'comprovante', 'extra']
+TIPOS_PDF = ['processo', 'extra']
 
 @app.route('/')
 def index():
@@ -243,52 +243,81 @@ def menu():
     
     return render_template('menu.html', username=session.get('username'))
 
-@app.route('/registrar-processo', methods=['GET', 'POST'])
-def registrar_processo():
+# Ajuste para permitir envio de múltiplos arquivos, um por vez
+@app.route('/registrar-processo', defaults={'lote': None}, methods=['GET', 'POST'])
+@app.route('/registrar-processo/<lote>', methods=['GET', 'POST'])
+def registrar_processo(lote):
     if 'logged_in' not in session or not session['logged_in']:
         flash('🔒 Você precisa fazer login primeiro!', 'error')
         return redirect(url_for('login'))
 
-    # Buscar lotes distintos já cadastrados
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT lote FROM entradas_carga ORDER BY lote ASC')
     lotes = [row[0] for row in cursor.fetchall()]
     conn.close()
 
-    TIPOS = ['capa', 'ticket', 'nota', 'contra', 'comprovante', 'extra']
     if request.method == 'POST':
         lote = request.form.get('lote')
         usuario = session.get('username', 'desconhecido')
-        arquivos_temp = []
-        for tipo in TIPOS:
+        arquivos = {}
+
+        for tipo in TIPOS_PDF:
             file = request.files.get(f'pdf_{tipo}')
             if file and file.filename:
                 nome_temp = secure_filename(f"{lote}_{tipo}_temp.pdf")
                 caminho_temp = os.path.join(PROCESSOS_DIR, nome_temp)
                 file.save(caminho_temp)
-                arquivos_temp.append(caminho_temp)
-        if arquivos_temp:
-            nome_final = secure_filename(f"{lote}_final.pdf")
-            caminho_final = os.path.join(PROCESSOS_DIR, nome_final)
-            unir_pdfs(arquivos_temp, caminho_final)
-            # Limpa arquivos temporários
-            for arq in arquivos_temp:
-                if os.path.exists(arq):
-                    os.remove(arq)
-            # Registrar no banco
+
+                nome_final = secure_filename(f"{lote}_{tipo}.pdf")
+                caminho_final = os.path.join(PROCESSOS_DIR, nome_final)
+                if os.path.exists(caminho_final):
+                    os.remove(caminho_final)
+                os.rename(caminho_temp, caminho_final)
+                arquivos[tipo] = nome_final
+
+        caminho_processo = os.path.join(PROCESSOS_DIR, f"{lote}_processo.pdf")
+        caminho_extra = os.path.join(PROCESSOS_DIR, f"{lote}_extra.pdf")
+        caminho_final = os.path.join(PROCESSOS_DIR, f"{lote}_final.pdf")
+
+        if 'processo' in arquivos and 'extra' not in arquivos:
+            os.rename(os.path.join(PROCESSOS_DIR, arquivos['processo']), caminho_processo)
             conn = sqlite3.connect(DB_PATH)
             cursor = conn.cursor()
-            cursor.execute('''INSERT INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
-                           (lote, nome_final, datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
+            cursor.execute('''REPLACE INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
+                           (lote, f"{lote}_processo.pdf", datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
             conn.commit()
             conn.close()
-            flash(f'✅ PDF final gerado e vinculado ao lote {lote} com sucesso!', 'success')
-        else:
-            flash('❌ Nenhum arquivo PDF enviado!', 'error')
-        return redirect(url_for('registrar_processo'))
 
-    return render_template('registrar_processo.html', lotes=lotes)
+        elif 'extra' in arquivos and 'processo' not in arquivos:
+            if os.path.exists(caminho_processo):
+                unir_pdfs([caminho_processo, os.path.join(PROCESSOS_DIR, arquivos['extra'])], caminho_final)
+                os.remove(caminho_processo)
+                os.remove(os.path.join(PROCESSOS_DIR, arquivos['extra']))
+                os.rename(caminho_final, caminho_processo)
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                cursor.execute('''REPLACE INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
+                               (lote, f"{lote}_processo.pdf", datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
+                conn.commit()
+                conn.close()
+
+        elif 'processo' in arquivos and 'extra' in arquivos:
+            unir_pdfs([os.path.join(PROCESSOS_DIR, arquivos['processo']), os.path.join(PROCESSOS_DIR, arquivos['extra'])], caminho_final)
+            os.remove(os.path.join(PROCESSOS_DIR, arquivos['processo']))
+            os.remove(os.path.join(PROCESSOS_DIR, arquivos['extra']))
+            os.rename(caminho_final, caminho_processo)
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute('''REPLACE INTO processos_lote (lote, arquivo_pdf, data_upload, usuario) VALUES (?, ?, ?, ?)''',
+                           (lote, f"{lote}_processo.pdf", datetime.now().strftime('%Y-%m-%d %H:%M:%S'), usuario))
+            conn.commit()
+            conn.close()
+
+        flash(f'✅ PDFs processados para o lote {lote} com sucesso!', 'success')
+        return redirect(url_for('registrar_processo', lote=lote))
+
+    return render_template('registrar_processo.html', lotes=lotes, lote_selecionado=lote)
 
 @app.route('/cadastrar-usuario', methods=['GET', 'POST'])
 def cadastrar_usuario():
@@ -426,10 +455,12 @@ def relatorio_entradas():
     entradas = listar_entradas()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT lote, arquivo_pdf FROM processos_lote')
+    cursor.execute('SELECT lote, arquivo_pdf FROM processos_lote')
     pdfs_lotes = cursor.fetchall()
     conn.close()
-    lotes_pdfs = {lote: pdf for lote, pdf in pdfs_lotes}  # Garante apenas um botão por lote
+    lotes_pdfs = {}
+    for lote, pdf in pdfs_lotes:
+        lotes_pdfs[lote] = pdf  # Garante que o último PDF vinculado ao lote seja exibido
     return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs=lotes_pdfs)
 
 # Função para redirecionar com lógica de PDF
