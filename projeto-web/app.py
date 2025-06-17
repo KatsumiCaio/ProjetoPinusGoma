@@ -111,7 +111,7 @@ def user_exists(username):
     return False
 
 # Criação da tabela de processos vinculados a lotes e arquivos PDF
-PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'processos_pdfs')
+PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'processos_pdfs')
 if not os.path.exists(PROCESSOS_DIR):
     os.makedirs(PROCESSOS_DIR)
 
@@ -423,7 +423,15 @@ def relatorio_entradas():
     if 'logged_in' not in session or not session['logged_in']:
         return redirect(url_for('login'))
     entradas = listar_entradas()
-    return render_template('relatorio_entradas.html', entradas=entradas)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT lote, arquivo_pdf FROM processos_lote')
+    pdfs_lotes = cursor.fetchall()
+    conn.close()
+    lotes_pdfs = {}
+    for lote, pdf in pdfs_lotes:
+        lotes_pdfs.setdefault(lote, []).append(pdf)
+    return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs=lotes_pdfs, spacing=True)
 
 @app.route('/encontrar-processo')
 def encontrar_processo():
@@ -541,9 +549,11 @@ def editar_pdf(id):
         if 'pdf' in request.files and request.files['pdf'].filename:
             pdf = request.files['pdf']
             filename = secure_filename(f"{entrada['lote']}_{entrada['ticket_pesagem']}.pdf")
-            pdf_path = os.path.join('processos_pdfs', filename)
-            pdf.save(os.path.join(os.path.dirname(__file__), pdf_path))
-            # Aqui você pode atualizar o campo do PDF no banco se desejar
+            pdf_path = os.path.join(PROCESSOS_DIR, filename)
+            # Excluir PDF anterior
+            if os.path.exists(pdf_path):
+                os.remove(pdf_path)
+            pdf.save(pdf_path)
             flash('✅ PDF atualizado com sucesso!', 'success')
         else:
             flash('❌ Nenhum arquivo PDF selecionado!', 'error')

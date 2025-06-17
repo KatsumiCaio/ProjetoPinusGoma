@@ -320,3 +320,6 @@ body::before {
 .fade-in-up {
     animation: fadeInUp 0.6s ease-out;
 }
+
+/* Diretório de Processos */
+PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'processos_pdfs')
