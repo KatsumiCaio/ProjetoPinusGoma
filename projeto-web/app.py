@@ -418,6 +418,7 @@ def entrada_carga(id=None):
     conn.close()
     return render_template('entrada_carga.html', entrada=entrada, editar=bool(id))
 
+# Correção para evitar botões duplicados
 @app.route('/relatorio-entradas')
 def relatorio_entradas():
     if 'logged_in' not in session or not session['logged_in']:
@@ -425,13 +426,24 @@ def relatorio_entradas():
     entradas = listar_entradas()
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT lote, arquivo_pdf FROM processos_lote')
+    cursor.execute('SELECT DISTINCT lote, arquivo_pdf FROM processos_lote')
     pdfs_lotes = cursor.fetchall()
     conn.close()
-    lotes_pdfs = {}
-    for lote, pdf in pdfs_lotes:
-        lotes_pdfs.setdefault(lote, []).append(pdf)
-    return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs=lotes_pdfs, spacing=True)
+    lotes_pdfs = {lote: pdf for lote, pdf in pdfs_lotes}  # Garante apenas um botão por lote
+    return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs=lotes_pdfs)
+
+# Função para redirecionar com lógica de PDF
+@app.route('/verificar-pdf/<lote>')
+def verificar_pdf(lote):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT arquivo_pdf FROM processos_lote WHERE lote = ?', (lote,))
+    pdf = cursor.fetchone()
+    conn.close()
+    if pdf:
+        return redirect(url_for('abrir_pdf_nome', nome_arquivo=pdf[0]))
+    else:
+        return redirect(url_for('registrar_processo'))
 
 @app.route('/encontrar-processo')
 def encontrar_processo():
@@ -566,7 +578,7 @@ def editar_pdf(id):
 def abrir_pdf_nome(nome_arquivo):
     caminho = os.path.join(PROCESSOS_DIR, nome_arquivo)
     if os.path.exists(caminho):
-        return send_from_directory(PROCESSOS_DIR, nome_arquivo)
+        return send_from_directory(PROCESSOS_DIR, nome_arquivo, as_attachment=False)
     flash('PDF não encontrado.', 'error')
     return redirect(url_for('relatorio_entradas'))
 

@@ -189,8 +189,7 @@
                         <td>
                             {% if entrada.lote in lotes_pdfs %}
                             <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                                {% for pdf in lotes_pdfs[entrada.lote] %}
-                                <a href="{{ url_for('static', filename='processos_pdfs/' + pdf) }}" class="btn"
+                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn"
                                     target="_blank"
                                     style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">Abrir
                                     PDF</a>
@@ -198,7 +197,6 @@
                                     title="Editar PDF"
                                     style="padding:0.4rem 0.8rem; font-size:1.1rem; background:#ffc107; color:#333; border-radius:6px; text-decoration:none;">✏️
                                 </a>
-                                {% endfor %}
                             </div>
                             {% else %}
                             <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"

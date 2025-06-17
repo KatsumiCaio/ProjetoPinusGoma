@@ -278,6 +278,56 @@ body::before {
     padding-top: 120px;
 }
 
+/* Ajuste para tabela responsiva no relatório */
+.table-relatorio-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.table-relatorio {
+    width: 100%;
+    max-width: 1200px;
+    border-collapse: collapse;
+}
+
+.table-relatorio th, .table-relatorio td {
+    padding: 0.8rem;
+    text-align: center;
+    border: 1px solid #a8c68f;
+}
+
+.table-relatorio th {
+    background-color: #6b8e23;
+    color: white;
+}
+
+.table-relatorio td {
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Ajuste para alinhamento dos filtros na tabela */
+.filters th {
+    padding: 0.2rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.filters th select {
+    width: 100%;
+    padding: 0.2rem;
+    font-size: 0.9rem;
+    border: 1px solid #a8c68f;
+    border-radius: 4px;
+    background-color: #f2f7f2;
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
     .container, .menu-container {
@@ -320,6 +370,3 @@ body::before {
 .fade-in-up {
     animation: fadeInUp 0.6s ease-out;
 }
-
-/* Diretório de Processos */
-PROCESSOS_DIR = os.path.join(os.path.dirname(__file__), 'static', 'processos_pdfs')
