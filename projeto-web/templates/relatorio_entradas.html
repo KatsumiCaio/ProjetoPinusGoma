@@ -126,6 +126,35 @@
                 white-space: normal;
             }
         }
+
+        .pdf-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pdf-actions .btn {
+            min-width: 60px;
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 700px) {
+            .pdf-actions {
+                flex-direction: column;
+                gap: 0.2rem;
+            }
+
+            .pdf-actions .btn {
+                min-width: 45px;
+                font-size: 0.7rem;
+                padding: 0.2rem 0.3rem;
+            }
+        }
     </style>
 </head>
 
@@ -188,20 +217,20 @@
                         <td>{{ entrada.categoria or '-' }}</td>
                         <td>
                             {% if entrada.lote in lotes_pdfs %}
-                            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                            <div class="pdf-actions">
                                 <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn"
-                                    target="_blank"
-                                    style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">Abrir
-                                    PDF</a>
+                                    target="_blank">Abrir PDF</a>
                                 <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
-                                    title="Editar PDF"
-                                    style="padding:0.4rem 0.8rem; font-size:1.1rem; background:#ffc107; color:#333; border-radius:6px; text-decoration:none;">✏️
-                                </a>
+                                    title="Editar PDF">✏️</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
+                                    title="Editar Entrada">📝</a>
                             </div>
                             {% else %}
-                            <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
-                                style="padding:0.4rem 1rem; font-size:0.95rem; background:#4a7c59; color:white; border-radius:6px; text-decoration:none;">Registrar
-                                Processo</a>
+                            <div class="pdf-actions">
+                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn">Registrar Processo</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
+                                    title="Editar Entrada">📝</a>
+                            </div>
                             {% endif %}
                         </td>
                     </tr>

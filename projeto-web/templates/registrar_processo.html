@@ -30,7 +30,7 @@
                 <select name="lote" id="lote" required>
                     <option value="">Selecione...</option>
                     {% for lote in lotes %}
-                    <option value="{{ lote }}">{{ lote }}</option>
+                    <option value="{{ lote }}" {% if lote_selecionado == lote %}selected{% endif %}>{{ lote }}</option>
                     {% endfor %}
                 </select>
             </div>
