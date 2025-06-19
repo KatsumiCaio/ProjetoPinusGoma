@@ -289,7 +289,8 @@
             dom: 'lfrtip'
         });
 
-        // Adiciona container para os botões de mês
+        // --- BOTÕES DE NAVEGAÇÃO ENTRE MESES (mês anterior à esquerda, mês atual central, mês posterior à direita) ---
+        $('#botoes-meses').remove();
         $('#tabela-entradas').after('<div id="botoes-meses" style="margin: 20px 0; text-align:center;"></div>');
 
         // Gera lista de meses únicos presentes na tabela
@@ -300,22 +301,54 @@
                 meses[mes] = true;
             }
         });
-        var mesesUnicos = Object.keys(meses).sort().reverse();
+        var mesesUnicos = Object.keys(meses).sort();
 
-        // Cria botões para cada mês
+        // Descobre mês atual, anterior e posterior
         var hoje = new Date();
         var mesAtual = hoje.getFullYear() + '-' + (hoje.getMonth()+1).toString().padStart(2,'0');
-        mesesUnicos.forEach(function(mes) {
-            var label = mes.split('-')[1] + '/' + mes.split('-')[0];
-            var btn = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:'+(mes===mesAtual?'#4a7c59':'#e0e0e0')+'; color:'+(mes===mesAtual?'#fff':'#333')+'; font-weight:'+(mes===mesAtual?'bold':'normal')+'; cursor:pointer;">'+label+'</button>');
-            btn.data('mes', mes);
-            btn.on('click', function() {
-                table.column(1).search(mes).draw();
-                $('.btn-mes').css({background:'#e0e0e0',color:'#333',fontWeight:'normal'});
-                $(this).css({background:'#4a7c59',color:'#fff',fontWeight:'bold'});
-            });
-            $('#botoes-meses').append(btn);
-        });
+        var idxAtual = mesesUnicos.indexOf(mesAtual);
+        var mesAnterior = idxAtual > 0 ? mesesUnicos[idxAtual-1] : null;
+        var mesPosterior = idxAtual >= 0 && idxAtual < mesesUnicos.length-1 ? mesesUnicos[idxAtual+1] : null;
+
+        // Função para desenhar os botões de navegação de meses
+        function desenharBotoesMeses(mesCentral) {
+            $('#botoes-meses').empty();
+            var idxCentral = mesesUnicos.indexOf(mesCentral);
+            var mesAnterior = idxCentral > 0 ? mesesUnicos[idxCentral-1] : null;
+            var mesPosterior = idxCentral >= 0 && idxCentral < mesesUnicos.length-1 ? mesesUnicos[idxCentral+1] : null;
+            // Botão mês anterior (esquerda)
+            if (mesAnterior) {
+                $('#botoes-meses').append(criarBotao(mesAnterior, true));
+            } else {
+                $('#botoes-meses').append(criarBotao('', false));
+            }
+            // Botão mês central (atual)
+            var btnAtual = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:#4a7c59; color:#fff; font-weight:bold;">'+mesCentral.split('-')[1]+'/'+mesCentral.split('-')[0]+'</button>');
+            $('#botoes-meses').append(btnAtual);
+            // Botão mês posterior (direita)
+            if (mesPosterior) {
+                $('#botoes-meses').append(criarBotao(mesPosterior, true));
+            } else {
+                $('#botoes-meses').append(criarBotao('', false));
+            }
+        }
+
+        // Redefine a função criarBotao para redesenhar ao clicar
+        function criarBotao(mes, ativo) {
+            var label = mes ? (mes.split('-')[1] + '/' + mes.split('-')[0]) : '';
+            var btn = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:'+(ativo?'#e0e0e0':'#ccc')+'; color:#333; font-weight:normal; cursor:'+(ativo?'pointer':'not-allowed')+';" '+(ativo?'':'disabled')+'>'+label+'</button>');
+            if (ativo) {
+                btn.data('mes', mes);
+                btn.on('click', function() {
+                    table.column(1).search(mes).draw();
+                    desenharBotoesMeses(mes);
+                });
+            }
+            return btn;
+        }
+
+        // Inicializa os botões com o mês atual
+        desenharBotoesMeses(mesAtual);
         // Aplica filtro do mês atual ao carregar
         table.column(1).search(mesAtual).draw();
     });
