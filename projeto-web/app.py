@@ -6,6 +6,8 @@ import logging
 import sqlite3
 from werkzeug.utils import secure_filename
 from unir_pdfs import unir_pdfs
+from flask import send_file
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = 'florestal_secret_key_2024'  # Mude para uma chave mais segura em produção
@@ -640,6 +642,68 @@ def excluir_entrada(id):
     conn.close()
     flash('✅ Entrada e PDF excluídos com sucesso!', 'success')
     return redirect(url_for('relatorio_entradas'))
+
+@app.route('/exportar-excel')
+def exportar_excel():
+    entradas = listar_entradas()
+    if not entradas:
+        flash('Nenhuma entrada para exportar!', 'error')
+        return redirect(url_for('relatorio_entradas'))
+    # Monta DataFrame
+    df = pd.DataFrame(entradas)
+    # Renomeia colunas para nomes amigáveis
+    df = df.rename(columns={
+        'lote': 'Lote',
+        'data_entrada': 'Data Entrada',
+        'placa': 'Placa',
+        'motorista': 'Motorista',
+        'ticket_pesagem': 'Ticket Pesagem',
+        'pedido_compra': 'Pedido de Compra',
+        'fornecedor': 'Fornecedor',
+        'quantidade_tambores': 'Qtd. Tambores',
+        'peso_liquido': 'Peso Líquido (kg)',
+        'especie_resina': 'Espécie Resina',
+        'categoria': 'Categoria'
+    })
+    # Ordena por data
+    if 'Data Entrada' in df:
+        df = df.sort_values('Data Entrada')
+    # Gera arquivo Excel em memória
+    from io import BytesIO
+    output = BytesIO()
+    df.to_excel(output, index=False, engine='openpyxl')
+    output.seek(0)
+    return send_file(
+        output,
+        download_name='relatorio_entradas.xlsx',
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+@app.route('/gerar-relatorio', methods=['GET'])
+def gerar_relatorio():
+    data_inicial = request.args.get('data_inicial')
+    data_final = request.args.get('data_final')
+    fornecedor = request.args.get('fornecedor')
+    categoria = request.args.get('categoria')
+    tipo_resina = request.args.get('tipo_resina')
+    entradas = listar_entradas()
+    # Filtra por data
+    if data_inicial:
+        entradas = [e for e in entradas if e['data_entrada'] >= data_inicial]
+    if data_final:
+        entradas = [e for e in entradas if e['data_entrada'] <= data_final]
+    # Filtra por fornecedor
+    if fornecedor:
+        entradas = [e for e in entradas if e['fornecedor'] == fornecedor]
+    # Filtra por categoria
+    if categoria:
+        entradas = [e for e in entradas if e.get('categoria','') == categoria]
+    # Filtra por tipo de resina
+    if tipo_resina:
+        entradas = [e for e in entradas if e.get('especie_resina','') == tipo_resina]
+    # Por enquanto, só exibe na tela (pode ser ajustado para gerar PDF/Excel)
+    return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs={})
 
 if __name__ == '__main__':
     import os

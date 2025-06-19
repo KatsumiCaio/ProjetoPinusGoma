@@ -175,6 +175,69 @@
         <div id="filtro-mes-ano" style="display:flex; gap:0.5rem; margin-bottom:1.2rem; align-items:center; justify-content:center;">
             <!-- Os botões serão gerados dinamicamente pelo JS -->
         </div>
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 1rem;">
+            <a href="{{ url_for('exportar_excel') }}" class="btn" style="background: #4a7c59; color: white; font-weight: bold;">⬇️ Exportar para Excel</a>
+            <button type="button" class="btn" id="btn-filtros" style="background: #2d5a27; color: white; font-weight: bold;">🔎 Gerar Relatório Personalizado</button>
+        </div>
+        <!-- Modal de Filtros -->
+        <div id="modal-filtros" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
+            <div style="background:white; padding:2rem; border-radius:10px; min-width:320px; max-width:90vw; box-shadow:0 2px 12px #0002;">
+                <h3 style="margin-top:0;">Filtros do Relatório</h3>
+                <form id="form-filtros" method="get" action="/gerar-relatorio">
+                    <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+                        <div>
+                            <label>Data Inicial:</label><br>
+                            <input type="date" name="data_inicial" required>
+                        </div>
+                        <div>
+                            <label>Data Final:</label><br>
+                            <input type="date" name="data_final" required>
+                        </div>
+                        <div>
+                            <label>Fornecedor:</label><br>
+                            <select name="fornecedor">
+                                <option value="">Todos</option>
+                                {% for f in entradas | map(attribute='fornecedor') | unique | list | sort %}
+                                <option value="{{ f }}">{{ f }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Categoria:</label><br>
+                            <select name="categoria">
+                                <option value="">Todas</option>
+                                {% for c in entradas | map(attribute='categoria') | unique | list | sort %}
+                                <option value="{{ c }}">{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Tipo Resina:</label><br>
+                            <select name="tipo_resina">
+                                <option value="">Todas</option>
+                                {% for r in entradas | map(attribute='especie_resina') | unique | list | sort %}
+                                <option value="{{ r }}">{{ r }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div style="margin-top:1.5rem; text-align:right;">
+                        <button type="button" id="fechar-modal" class="btn" style="background:#aaa; color:white;">Cancelar</button>
+                        <button type="submit" class="btn" style="background:#4a7c59; color:white;">Gerar Relatório</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+        $(document).ready(function(){
+            $('#btn-filtros').on('click', function(){
+                $('#modal-filtros').css('display','flex');
+            });
+            $('#fechar-modal').on('click', function(){
+                $('#modal-filtros').hide();
+            });
+        });
+        </script>
         {% if entradas %}
         <div class="table-responsive">
             <table id="tabela-entradas">
