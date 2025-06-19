@@ -214,7 +214,7 @@
                     {% for entrada in entradas %}
                     <tr>
                         <td>{{ entrada.lote }}</td>
-                        <td>{{ entrada.data_entrada }}</td>
+                        <td data-date="{{ entrada.data_entrada }}">{% set data = entrada.data_entrada.split('-') %}{{ data[2] }}/{{ data[1] }}/{{ data[0] }}</td>
                         <td>{{ entrada.placa }}</td>
                         <td>{{ entrada.motorista }}</td>
                         <td>{{ entrada.ticket_pesagem }}</td>
@@ -281,17 +281,21 @@
         var idx_atual = meses_anos.length-1;
         function renderBotoes(idx) {
             var html = '';
+            function formatMesAno(mesano) {
+                var partes = mesano.split('-');
+                return partes[1] + '/' + partes[0];
+            }
             // Botão anterior
             if(idx > 0) {
-                html += '<button class="btn btn-mes" data-idx="'+(idx-1)+'">'+meses_anos[idx-1]+'</button>';
+                html += '<button class="btn btn-mes" data-idx="'+(idx-1)+'">'+formatMesAno(meses_anos[idx-1])+'</button>';
             } else {
                 html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
             }
             // Botão atual
-            html += '<button class="btn btn-mes btn-atual" data-idx="'+idx+'" style="background:#4a7c59; color:white;">'+meses_anos[idx]+'</button>';
+            html += '<button class="btn btn-mes btn-atual" data-idx="'+idx+'" style="background:#4a7c59; color:white;">'+formatMesAno(meses_anos[idx])+'</button>';
             // Botão próximo
             if(idx < meses_anos.length-1) {
-                html += '<button class="btn btn-mes" data-idx="'+(idx+1)+'">'+meses_anos[idx+1]+'</button>';
+                html += '<button class="btn btn-mes" data-idx="'+(idx+1)+'">'+formatMesAno(meses_anos[idx+1])+'</button>';
             } else {
                 html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
             }
@@ -300,7 +304,7 @@
         function filtrarTabela(idx) {
             var mesano = meses_anos[idx];
             table.rows().every(function(){
-                var dataEntrada = this.data()[1];
+                var dataEntrada = $(this.node()).find('td[data-date]').attr('data-date');
                 if(dataEntrada && dataEntrada.substr(0,7)===mesano){
                     $(this.node()).show();
                 } else {
