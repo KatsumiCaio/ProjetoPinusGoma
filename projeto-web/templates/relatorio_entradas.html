@@ -7,9 +7,6 @@
     <title>Relatório de Entradas de Carga</title>
     <!-- JQuery -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- Chosen plugin (necessário para select_type: 'chosen') -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"></script>
     <!-- DataTables CSS/JS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -18,12 +15,13 @@
     <script src="https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
     <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-    <!-- yadcf CSS/JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/yadcf@0.9.4/jquery.dataTables.yadcf.css">
-    <script src="https://cdn.jsdelivr.net/npm/yadcf@0.9.4/jquery.dataTables.yadcf.js"></script>
-    <!-- DataTables ColumnFilterWidgets CSS/JS -->
+    <!-- ColumnFilterWidgets CSS/JS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vedmack/columnFilterWidgets@1.3.0/dist/ColumnFilterWidgets.min.css">
     <script src="https://cdn.jsdelivr.net/gh/vedmack/columnFilterWidgets@1.3.0/dist/ColumnFilterWidgets.min.js"></script>
+    <!-- DataTables FilterDropDown plugin -->
+    <script src="https://cdn.datatables.net/plug-ins/1.13.7/api/fnFilterOnReturn.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/datatables.net-filter-dropdown@1.4.0/dist/dataTables.filterDropDown.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-filter-dropdown@1.4.0/dist/dataTables.filterDropDown.min.css">
     <!-- Seu CSS (deixe por último para não sobrescrever Chosen) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
@@ -200,8 +198,10 @@
                         <th>Espécie Resina</th>
                         <th>Categoria</th>
                         <th>PDF</th>
+                        <th>Usuário</th>
                     </tr>
                     <tr class="filters">
+                        <th></th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -229,28 +229,24 @@
                         <td>{{ entrada.fornecedor }}</td>
                         <td>{{ entrada.quantidade_tambores }}</td>
                         <td>{{ entrada.peso_liquido }}</td>
-                        <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido /
-                            entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
+                        <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido / entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
                         <td>{{ entrada.especie_resina }}</td>
                         <td>{{ entrada.categoria or '-' }}</td>
-                        <td>
+                        <td style="min-width: 180px;">
                             {% if entrada.lote in lotes_pdfs %}
                             <div class="pdf-actions">
-                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn"
-                                    target="_blank">Abrir PDF</a>
-                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
-                                    title="Editar PDF">✏️</a>
-                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
-                                    title="Editar Entrada">📝</a>
+                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn" target="_blank">Abrir PDF</a>
+                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn" title="Editar PDF">✏️</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn" title="Editar Entrada">📝</a>
                             </div>
                             {% else %}
                             <div class="pdf-actions">
                                 <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn">Registrar Processo</a>
-                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
-                                    title="Editar Entrada">📝</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn" title="Editar Entrada">📝</a>
                             </div>
                             {% endif %}
                         </td>
+                        <td>{{ entrada.usuario_registro }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -277,17 +273,51 @@
                 url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
             },
             orderCellsTop: true,
-            fixedHeader: true
+            fixedHeader: true,
+            filterDropDown: {
+                columns: [0,1,2,3,4,5,6,7,8,9,10,11,12], // Inclui a coluna 12 (Mês/Ano)
+                bootstrap: false,
+                autoSize: true,
+                search: true,
+                selectAll: true,
+                label: 'Filtrar',
+                caseSensitive: false
+            },
+            columnDefs: [
+                { targets: [12], visible: true } // Garante que a coluna PDF fique visível
+            ],
+            dom: 'lfrtip'
         });
-        // Inicializa o filtro estilo Excel no cabeçalho
-        new $.fn.dataTable.ColumnFilterWidgets(table, {
-            exclude: [12], // Exclui a coluna PDF
-            auto_filter: true,
-            multi_select: true,
-            search: true,
-            select_all: true,
-            excel_style: true // Força o visual Excel
+
+        // Adiciona container para os botões de mês
+        $('#tabela-entradas').after('<div id="botoes-meses" style="margin: 20px 0; text-align:center;"></div>');
+
+        // Gera lista de meses únicos presentes na tabela
+        var meses = {};
+        table.column(1).data().each(function(data) {
+            if (data && data.length >= 7) {
+                var mes = data.substring(0,7); // yyyy-mm
+                meses[mes] = true;
+            }
         });
+        var mesesUnicos = Object.keys(meses).sort().reverse();
+
+        // Cria botões para cada mês
+        var hoje = new Date();
+        var mesAtual = hoje.getFullYear() + '-' + (hoje.getMonth()+1).toString().padStart(2,'0');
+        mesesUnicos.forEach(function(mes) {
+            var label = mes.split('-')[1] + '/' + mes.split('-')[0];
+            var btn = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:'+(mes===mesAtual?'#4a7c59':'#e0e0e0')+'; color:'+(mes===mesAtual?'#fff':'#333')+'; font-weight:'+(mes===mesAtual?'bold':'normal')+'; cursor:pointer;">'+label+'</button>');
+            btn.data('mes', mes);
+            btn.on('click', function() {
+                table.column(1).search(mes).draw();
+                $('.btn-mes').css({background:'#e0e0e0',color:'#333',fontWeight:'normal'});
+                $(this).css({background:'#4a7c59',color:'#fff',fontWeight:'bold'});
+            });
+            $('#botoes-meses').append(btn);
+        });
+        // Aplica filtro do mês atual ao carregar
+        table.column(1).search(mesAtual).draw();
     });
 </script>
 
