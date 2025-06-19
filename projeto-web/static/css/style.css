@@ -69,9 +69,10 @@ body::before {
 }
 
 .header p {
-    color: #4a7c59;
-    font-size: 1rem;
+    color: #2d5016;
+    font-size: 1.05rem;
     font-weight: 500;
+    text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
 }
 
 /* Formulários */
@@ -137,7 +138,7 @@ body::before {
 }
 
 .menu-item {
-    background: rgba(255, 255, 255, 0.95);
+    background: #f8fff8;
     backdrop-filter: blur(10px);
     padding: 2.5rem;
     border-radius: 15px;
@@ -165,6 +166,7 @@ body::before {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(45, 80, 22, 0.3);
     border-color: rgba(107, 142, 35, 0.3);
+    background: #e6f7e6;
 }
 
 .menu-item .icon {
@@ -182,13 +184,14 @@ body::before {
     margin-bottom: 1rem;
     font-size: 1.3rem;
     font-weight: 700;
+    text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
 }
 
 .menu-item p {
-    color: #ffffff;
-    font-size: 0.95rem;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
+    color: #2d5016;
+    font-size: 1rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px #fff, 0 0 2px #fff;
 }
 
 /* Navegação superior */
