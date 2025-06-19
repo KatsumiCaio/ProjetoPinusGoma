@@ -615,6 +615,32 @@ def abrir_pdf_nome(nome_arquivo):
     flash('PDF não encontrado.', 'error')
     return redirect(url_for('relatorio_entradas'))
 
+@app.route('/excluir_entrada/<int:id>', methods=['POST'])
+def excluir_entrada(id):
+    if 'logged_in' not in session or not session['logged_in']:
+        flash('🔒 Você precisa fazer login primeiro!', 'error')
+        return redirect(url_for('login'))
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    # Busca o lote para remover o PDF
+    cursor.execute('SELECT lote FROM entradas_carga WHERE id=?', (id,))
+    row = cursor.fetchone()
+    lote = row[0] if row else None
+    # Remove a entrada do banco
+    cursor.execute('DELETE FROM entradas_carga WHERE id=?', (id,))
+    conn.commit()
+    # Remove o PDF associado, se existir
+    if lote:
+        pdf_path = os.path.join(os.path.dirname(__file__), 'static', 'processos_pdfs', f'{lote}_processo.pdf')
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+    # Remove o registro do PDF do banco, se existir
+    cursor.execute('DELETE FROM processos_lote WHERE lote=?', (lote,))
+    conn.commit()
+    conn.close()
+    flash('✅ Entrada e PDF excluídos com sucesso!', 'success')
+    return redirect(url_for('relatorio_entradas'))
+
 if __name__ == '__main__':
     import os
     if not os.path.exists(DB_PATH):

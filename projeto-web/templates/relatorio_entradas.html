@@ -5,25 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Entradas de Carga</title>
-    <!-- JQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <!-- DataTables CSS/JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <!-- DataTables SearchPanes CSS/JS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.dataTables.min.css">
-    <script src="https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.dataTables.min.css">
-    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
-    <!-- ColumnFilterWidgets CSS/JS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/vedmack/columnFilterWidgets@1.3.0/dist/ColumnFilterWidgets.min.css">
-    <script src="https://cdn.jsdelivr.net/gh/vedmack/columnFilterWidgets@1.3.0/dist/ColumnFilterWidgets.min.js"></script>
-    <!-- DataTables FilterDropDown plugin -->
-    <script src="https://cdn.datatables.net/plug-ins/1.13.7/api/fnFilterOnReturn.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/datatables.net-filter-dropdown@1.4.0/dist/dataTables.filterDropDown.min.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/datatables.net-filter-dropdown@1.4.0/dist/dataTables.filterDropDown.min.css">
-    <!-- Seu CSS (deixe por último para não sobrescrever Chosen) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+    <!-- yadcf CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/yadcf@0.9.4/jquery.dataTables.yadcf.css">
     <style>
         /* Sobrescreve o display flex do body global apenas nesta página */
         body.relatorio-body {
@@ -180,6 +166,15 @@
         <div class="header-title">📋 Relatório de Entradas de Carga</div>
     </div>
     <div class="container">
+        {% set meses_anos_raw = [] %}
+        {% for entrada in entradas %}
+            {% set _ = meses_anos_raw.append(entrada.data_entrada[:7]) %}
+        {% endfor %}
+        {% set meses_anos_unicos = meses_anos_raw | unique | list %}
+        {% set meses_anos_ordenados = meses_anos_unicos | sort %}
+        <div id="filtro-mes-ano" style="display:flex; gap:0.5rem; margin-bottom:1.2rem; align-items:center; justify-content:center;">
+            <!-- Os botões serão gerados dinamicamente pelo JS -->
+        </div>
         {% if entradas %}
         <div class="table-responsive">
             <table id="tabela-entradas">
@@ -198,10 +193,8 @@
                         <th>Espécie Resina</th>
                         <th>Categoria</th>
                         <th>PDF</th>
-                        <th>Usuário</th>
                     </tr>
                     <tr class="filters">
-                        <th></th>
                         <th></th>
                         <th></th>
                         <th></th>
@@ -229,24 +222,28 @@
                         <td>{{ entrada.fornecedor }}</td>
                         <td>{{ entrada.quantidade_tambores }}</td>
                         <td>{{ entrada.peso_liquido }}</td>
-                        <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido / entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
+                        <td>{% if entrada.quantidade_tambores and entrada.peso_liquido %}{{ (entrada.peso_liquido /
+                            entrada.quantidade_tambores)|round(2) }}{% else %}-{% endif %}</td>
                         <td>{{ entrada.especie_resina }}</td>
                         <td>{{ entrada.categoria or '-' }}</td>
-                        <td style="min-width: 180px;">
+                        <td>
                             {% if entrada.lote in lotes_pdfs %}
                             <div class="pdf-actions">
-                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn" target="_blank">Abrir PDF</a>
-                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn" title="Editar PDF">✏️</a>
-                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn" title="Editar Entrada">📝</a>
+                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn"
+                                    target="_blank">Abrir PDF</a>
+                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
+                                    title="Editar PDF">✏️</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
+                                    title="Editar Entrada">📝</a>
                             </div>
                             {% else %}
                             <div class="pdf-actions">
                                 <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn">Registrar Processo</a>
-                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn" title="Editar Entrada">📝</a>
+                                <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
+                                    title="Editar Entrada">📝</a>
                             </div>
                             {% endif %}
                         </td>
-                        <td>{{ entrada.usuario_registro }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -266,6 +263,10 @@
         {% endif %}
     </div>
 </body>
+<!-- JQuery e DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/yadcf@0.9.4/jquery.dataTables.yadcf.js"></script>
 <script>
     $(document).ready(function () {
         var table = $('#tabela-entradas').DataTable({
@@ -273,84 +274,49 @@
                 url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
             },
             orderCellsTop: true,
-            fixedHeader: true,
-            filterDropDown: {
-                columns: [0,1,2,3,4,5,6,7,8,9,10,11,12], // Inclui a coluna 12 (Mês/Ano)
-                bootstrap: false,
-                autoSize: true,
-                search: true,
-                selectAll: true,
-                label: 'Filtrar',
-                caseSensitive: false
-            },
-            columnDefs: [
-                { targets: [12], visible: true } // Garante que a coluna PDF fique visível
-            ],
-            dom: 'lfrtip'
+            fixedHeader: true
         });
-
-        // --- BOTÕES DE NAVEGAÇÃO ENTRE MESES (mês anterior à esquerda, mês atual central, mês posterior à direita) ---
-        $('#botoes-meses').remove();
-        $('#tabela-entradas').after('<div id="botoes-meses" style="margin: 20px 0; text-align:center;"></div>');
-
-        // Gera lista de meses únicos presentes na tabela
-        var meses = {};
-        table.column(1).data().each(function(data) {
-            if (data && data.length >= 7) {
-                var mes = data.substring(0,7); // yyyy-mm
-                meses[mes] = true;
+        // Meses/anos únicos vindos do backend
+        var meses_anos = JSON.parse('{{ meses_anos_ordenados | tojson | safe }}');
+        var idx_atual = meses_anos.length-1;
+        function renderBotoes(idx) {
+            var html = '';
+            // Botão anterior
+            if(idx > 0) {
+                html += '<button class="btn btn-mes" data-idx="'+(idx-1)+'">'+meses_anos[idx-1]+'</button>';
+            } else {
+                html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
             }
+            // Botão atual
+            html += '<button class="btn btn-mes btn-atual" data-idx="'+idx+'" style="background:#4a7c59; color:white;">'+meses_anos[idx]+'</button>';
+            // Botão próximo
+            if(idx < meses_anos.length-1) {
+                html += '<button class="btn btn-mes" data-idx="'+(idx+1)+'">'+meses_anos[idx+1]+'</button>';
+            } else {
+                html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
+            }
+            $('#filtro-mes-ano').html(html);
+        }
+        function filtrarTabela(idx) {
+            var mesano = meses_anos[idx];
+            table.rows().every(function(){
+                var dataEntrada = this.data()[1];
+                if(dataEntrada && dataEntrada.substr(0,7)===mesano){
+                    $(this.node()).show();
+                } else {
+                    $(this.node()).hide();
+                }
+            });
+        }
+        // Inicializa com o mês/ano mais recente
+        renderBotoes(idx_atual);
+        filtrarTabela(idx_atual);
+        // Navegação
+        $('#filtro-mes-ano').on('click', '.btn-mes:not([disabled])', function(){
+            var idx = parseInt($(this).data('idx'));
+            renderBotoes(idx);
+            filtrarTabela(idx);
         });
-        var mesesUnicos = Object.keys(meses).sort();
-
-        // Descobre mês atual, anterior e posterior
-        var hoje = new Date();
-        var mesAtual = hoje.getFullYear() + '-' + (hoje.getMonth()+1).toString().padStart(2,'0');
-        var idxAtual = mesesUnicos.indexOf(mesAtual);
-        var mesAnterior = idxAtual > 0 ? mesesUnicos[idxAtual-1] : null;
-        var mesPosterior = idxAtual >= 0 && idxAtual < mesesUnicos.length-1 ? mesesUnicos[idxAtual+1] : null;
-
-        // Função para desenhar os botões de navegação de meses
-        function desenharBotoesMeses(mesCentral) {
-            $('#botoes-meses').empty();
-            var idxCentral = mesesUnicos.indexOf(mesCentral);
-            var mesAnterior = idxCentral > 0 ? mesesUnicos[idxCentral-1] : null;
-            var mesPosterior = idxCentral >= 0 && idxCentral < mesesUnicos.length-1 ? mesesUnicos[idxCentral+1] : null;
-            // Botão mês anterior (esquerda)
-            if (mesAnterior) {
-                $('#botoes-meses').append(criarBotao(mesAnterior, true));
-            } else {
-                $('#botoes-meses').append(criarBotao('', false));
-            }
-            // Botão mês central (atual)
-            var btnAtual = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:#4a7c59; color:#fff; font-weight:bold;">'+mesCentral.split('-')[1]+'/'+mesCentral.split('-')[0]+'</button>');
-            $('#botoes-meses').append(btnAtual);
-            // Botão mês posterior (direita)
-            if (mesPosterior) {
-                $('#botoes-meses').append(criarBotao(mesPosterior, true));
-            } else {
-                $('#botoes-meses').append(criarBotao('', false));
-            }
-        }
-
-        // Redefine a função criarBotao para redesenhar ao clicar
-        function criarBotao(mes, ativo) {
-            var label = mes ? (mes.split('-')[1] + '/' + mes.split('-')[0]) : '';
-            var btn = $('<button class="btn-mes" style="margin:0 5px; padding:6px 16px; border-radius:5px; border:none; background:'+(ativo?'#e0e0e0':'#ccc')+'; color:#333; font-weight:normal; cursor:'+(ativo?'pointer':'not-allowed')+';" '+(ativo?'':'disabled')+'>'+label+'</button>');
-            if (ativo) {
-                btn.data('mes', mes);
-                btn.on('click', function() {
-                    table.column(1).search(mes).draw();
-                    desenharBotoesMeses(mes);
-                });
-            }
-            return btn;
-        }
-
-        // Inicializa os botões com o mês atual
-        desenharBotoesMeses(mesAtual);
-        // Aplica filtro do mês atual ao carregar
-        table.column(1).search(mesAtual).draw();
     });
 </script>
 

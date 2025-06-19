@@ -156,6 +156,11 @@
                 <a href="{{ url_for('relatorio_entradas') }}" class="btn btn-secondary">❌ Cancelar</a>
             </div>
         </form>
+        <div style="text-align: center; margin-top: 1rem;">
+            <form method="POST" action="{{ url_for('excluir_entrada', id=entrada.id) }}" style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta entrada? Esta ação não pode ser desfeita e o PDF será removido!');">
+                <button type="submit" class="btn btn-secondary" style="background:#b22222; color:#fff;">🗑️ Excluir Entrada</button>
+            </form>
+        </div>
     </div>
 </body>
 
