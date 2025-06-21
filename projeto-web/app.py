@@ -724,12 +724,32 @@ def exportar_excel_personalizado():
     if tipo_resina:
         entradas = [e for e in entradas if e.get('especie_resina','') == tipo_resina]
     import pandas as pd
-    import io
+    from io import BytesIO
     df = pd.DataFrame(entradas)
-    output = io.BytesIO()
+    df = df.rename(columns={
+        'lote': 'Lote',
+        'data_entrada': 'Data Entrada',
+        'placa': 'Placa',
+        'motorista': 'Motorista',
+        'ticket_pesagem': 'Ticket Pesagem',
+        'pedido_compra': 'Pedido de Compra',
+        'fornecedor': 'Fornecedor',
+        'quantidade_tambores': 'Qtd. Tambores',
+        'peso_liquido': 'Peso Líquido (kg)',
+        'especie_resina': 'Espécie Resina',
+        'categoria': 'Categoria'
+    })
+    if 'Data Entrada' in df:
+        df = df.sort_values('Data Entrada')
+    output = BytesIO()
     df.to_excel(output, index=False, engine='openpyxl')
     output.seek(0)
-    return send_file(output, download_name='relatorio_personalizado.xlsx', as_attachment=True)
+    return send_file(
+        output,
+        download_name='relatorio_personalizado.xlsx',
+        as_attachment=True,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
 
 if __name__ == '__main__':
     import os

@@ -226,25 +226,18 @@
                             </select>
                         </div>
                     </div>
-                    <div style="margin-top:1.5rem; text-align:right;">
+                    <div
+                        style="margin-top:1.5rem; text-align:right; display: flex; gap: 0.5rem; justify-content: flex-end;">
                         <button type="button" id="fechar-modal" class="btn"
                             style="background:#aaa; color:white;">Cancelar</button>
                         <button type="submit" class="btn" style="background:#4a7c59; color:white;">Gerar
                             Relatório</button>
+                        <button type="button" id="exportar-excel-filtros" class="btn"
+                            style="background:#2d5a27; color:white;">Exportar para Excel</button>
                     </div>
                 </form>
             </div>
         </div>
-        <script>
-            $(document).ready(function () {
-                $('#btn-filtros').on('click', function () {
-                    $('#modal-filtros').css('display', 'flex');
-                });
-                $('#fechar-modal').on('click', function () {
-                    $('#modal-filtros').hide();
-                });
-            });
-        </script>
         {% if entradas %}
         <div class="table-responsive">
             <table id="tabela-entradas">
@@ -341,6 +334,24 @@
 <script src="https://cdn.jsdelivr.net/npm/yadcf@0.9.4/jquery.dataTables.yadcf.js"></script>
 <script>
     $(document).ready(function () {
+        // Script do modal de filtros
+        $('#btn-filtros').on('click', function () {
+            // Data inicial: primeiro dia do mês atual
+            var hoje = new Date();
+            var primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+            var yyyy = primeiroDia.getFullYear();
+            var mm = String(primeiroDia.getMonth() + 1).padStart(2, '0');
+            var dd = '01';
+            var dataInicial = yyyy + '-' + mm + '-' + dd;
+            // Data final: hoje
+            var dataFinal = hoje.toISOString().slice(0, 10);
+            $("input[name='data_inicial']").val(dataInicial);
+            $("input[name='data_final']").val(dataFinal);
+            $('#modal-filtros').css('display', 'flex');
+        });
+        $('#fechar-modal').on('click', function () {
+            $('#modal-filtros').hide();
+        });
         var table = $('#tabela-entradas').DataTable({
             language: {
                 url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
@@ -392,6 +403,20 @@
             var idx = parseInt($(this).data('idx'));
             renderBotoes(idx);
             filtrarTabela(idx);
+        });
+        // Botão Exportar Excel Personalizado dentro do modal
+        $('#exportar-excel-personalizado').on('click', function (e) {
+            e.preventDefault();
+            var params = $('#form-filtros').serialize();
+            var url = '/exportar-excel-personalizado?' + params;
+            window.open(url, '_blank');
+        });
+        // Botão Exportar para Excel no modal de filtros
+        $('#exportar-excel-filtros').on('click', function (e) {
+            e.preventDefault();
+            var params = $('#form-filtros').serialize();
+            var url = '/exportar-excel-personalizado?' + params;
+            window.open(url, '_blank');
         });
     });
 </script>
