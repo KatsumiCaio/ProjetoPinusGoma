@@ -705,6 +705,32 @@ def gerar_relatorio():
     # Por enquanto, só exibe na tela (pode ser ajustado para gerar PDF/Excel)
     return render_template('relatorio_entradas.html', entradas=entradas, lotes_pdfs={})
 
+@app.route('/exportar-excel-personalizado', methods=['GET'])
+def exportar_excel_personalizado():
+    data_inicial = request.args.get('data_inicial')
+    data_final = request.args.get('data_final')
+    fornecedor = request.args.get('fornecedor')
+    categoria = request.args.get('categoria')
+    tipo_resina = request.args.get('tipo_resina')
+    entradas = listar_entradas()
+    if data_inicial:
+        entradas = [e for e in entradas if e['data_entrada'] >= data_inicial]
+    if data_final:
+        entradas = [e for e in entradas if e['data_entrada'] <= data_final]
+    if fornecedor:
+        entradas = [e for e in entradas if e['fornecedor'] == fornecedor]
+    if categoria:
+        entradas = [e for e in entradas if e.get('categoria','') == categoria]
+    if tipo_resina:
+        entradas = [e for e in entradas if e.get('especie_resina','') == tipo_resina]
+    import pandas as pd
+    import io
+    df = pd.DataFrame(entradas)
+    output = io.BytesIO()
+    df.to_excel(output, index=False, engine='openpyxl')
+    output.seek(0)
+    return send_file(output, download_name='relatorio_personalizado.xlsx', as_attachment=True)
+
 if __name__ == '__main__':
     import os
     if not os.path.exists(DB_PATH):

@@ -168,20 +168,25 @@
     <div class="container">
         {% set meses_anos_raw = [] %}
         {% for entrada in entradas %}
-            {% set _ = meses_anos_raw.append(entrada.data_entrada[:7]) %}
+        {% set _ = meses_anos_raw.append(entrada.data_entrada[:7]) %}
         {% endfor %}
         {% set meses_anos_unicos = meses_anos_raw | unique | list %}
         {% set meses_anos_ordenados = meses_anos_unicos | sort %}
-        <div id="filtro-mes-ano" style="display:flex; gap:0.5rem; margin-bottom:1.2rem; align-items:center; justify-content:center;">
+        <div id="filtro-mes-ano"
+            style="display:flex; gap:0.5rem; margin-bottom:1.2rem; align-items:center; justify-content:center;">
             <!-- Os botões serão gerados dinamicamente pelo JS -->
         </div>
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-bottom: 1rem;">
-            <a href="{{ url_for('exportar_excel') }}" class="btn" style="background: #4a7c59; color: white; font-weight: bold;">⬇️ Exportar para Excel</a>
-            <button type="button" class="btn" id="btn-filtros" style="background: #2d5a27; color: white; font-weight: bold;">🔎 Gerar Relatório Personalizado</button>
+            <a href="{{ url_for('exportar_excel') }}" class="btn"
+                style="background: #4a7c59; color: white; font-weight: bold;">⬇️ Exportar para Excel</a>
+            <button type="button" class="btn" id="btn-filtros"
+                style="background: #2d5a27; color: white; font-weight: bold;">🔎 Gerar Relatório Personalizado</button>
         </div>
         <!-- Modal de Filtros -->
-        <div id="modal-filtros" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
-            <div style="background:white; padding:2rem; border-radius:10px; min-width:320px; max-width:90vw; box-shadow:0 2px 12px #0002;">
+        <div id="modal-filtros"
+            style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
+            <div
+                style="background:white; padding:2rem; border-radius:10px; min-width:320px; max-width:90vw; box-shadow:0 2px 12px #0002;">
                 <h3 style="margin-top:0;">Filtros do Relatório</h3>
                 <form id="form-filtros" method="get" action="/gerar-relatorio">
                     <div style="display:flex; gap:1rem; flex-wrap:wrap;">
@@ -222,21 +227,23 @@
                         </div>
                     </div>
                     <div style="margin-top:1.5rem; text-align:right;">
-                        <button type="button" id="fechar-modal" class="btn" style="background:#aaa; color:white;">Cancelar</button>
-                        <button type="submit" class="btn" style="background:#4a7c59; color:white;">Gerar Relatório</button>
+                        <button type="button" id="fechar-modal" class="btn"
+                            style="background:#aaa; color:white;">Cancelar</button>
+                        <button type="submit" class="btn" style="background:#4a7c59; color:white;">Gerar
+                            Relatório</button>
                     </div>
                 </form>
             </div>
         </div>
         <script>
-        $(document).ready(function(){
-            $('#btn-filtros').on('click', function(){
-                $('#modal-filtros').css('display','flex');
+            $(document).ready(function () {
+                $('#btn-filtros').on('click', function () {
+                    $('#modal-filtros').css('display', 'flex');
+                });
+                $('#fechar-modal').on('click', function () {
+                    $('#modal-filtros').hide();
+                });
             });
-            $('#fechar-modal').on('click', function(){
-                $('#modal-filtros').hide();
-            });
-        });
         </script>
         {% if entradas %}
         <div class="table-responsive">
@@ -277,7 +284,8 @@
                     {% for entrada in entradas %}
                     <tr>
                         <td>{{ entrada.lote }}</td>
-                        <td data-date="{{ entrada.data_entrada }}">{% set data = entrada.data_entrada.split('-') %}{{ data[2] }}/{{ data[1] }}/{{ data[0] }}</td>
+                        <td data-date="{{ entrada.data_entrada }}">{% set data = entrada.data_entrada.split('-') %}{{
+                            data[2] }}/{{ data[1] }}/{{ data[0] }}</td>
                         <td>{{ entrada.placa }}</td>
                         <td>{{ entrada.motorista }}</td>
                         <td>{{ entrada.ticket_pesagem }}</td>
@@ -292,8 +300,8 @@
                         <td>
                             {% if entrada.lote in lotes_pdfs %}
                             <div class="pdf-actions">
-                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}" class="btn"
-                                    target="_blank">Abrir PDF</a>
+                                <a href="{{ url_for('static', filename='processos_pdfs/' + lotes_pdfs[entrada.lote]) }}"
+                                    class="btn" target="_blank">Abrir PDF</a>
                                 <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn"
                                     title="Editar PDF">✏️</a>
                                 <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
@@ -301,7 +309,8 @@
                             </div>
                             {% else %}
                             <div class="pdf-actions">
-                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn">Registrar Processo</a>
+                                <a href="{{ url_for('registrar_processo', lote=entrada.lote) }}" class="btn">Registrar
+                                    Processo</a>
                                 <a href="{{ url_for('editar_entrada', id=entrada.id) }}" class="btn"
                                     title="Editar Entrada">📝</a>
                             </div>
@@ -341,7 +350,7 @@
         });
         // Meses/anos únicos vindos do backend
         var meses_anos = JSON.parse('{{ meses_anos_ordenados | tojson | safe }}');
-        var idx_atual = meses_anos.length-1;
+        var idx_atual = meses_anos.length - 1;
         function renderBotoes(idx) {
             var html = '';
             function formatMesAno(mesano) {
@@ -349,16 +358,16 @@
                 return partes[1] + '/' + partes[0];
             }
             // Botão anterior
-            if(idx > 0) {
-                html += '<button class="btn btn-mes" data-idx="'+(idx-1)+'">'+formatMesAno(meses_anos[idx-1])+'</button>';
+            if (idx > 0) {
+                html += '<button class="btn btn-mes" data-idx="' + (idx - 1) + '">' + formatMesAno(meses_anos[idx - 1]) + '</button>';
             } else {
                 html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
             }
             // Botão atual
-            html += '<button class="btn btn-mes btn-atual" data-idx="'+idx+'" style="background:#4a7c59; color:white;">'+formatMesAno(meses_anos[idx])+'</button>';
+            html += '<button class="btn btn-mes btn-atual" data-idx="' + idx + '" style="background:#4a7c59; color:white;">' + formatMesAno(meses_anos[idx]) + '</button>';
             // Botão próximo
-            if(idx < meses_anos.length-1) {
-                html += '<button class="btn btn-mes" data-idx="'+(idx+1)+'">'+formatMesAno(meses_anos[idx+1])+'</button>';
+            if (idx < meses_anos.length - 1) {
+                html += '<button class="btn btn-mes" data-idx="' + (idx + 1) + '">' + formatMesAno(meses_anos[idx + 1]) + '</button>';
             } else {
                 html += '<button class="btn btn-mes" disabled style="background:#ccc; color:#666;">---</button>';
             }
@@ -366,9 +375,9 @@
         }
         function filtrarTabela(idx) {
             var mesano = meses_anos[idx];
-            table.rows().every(function(){
+            table.rows().every(function () {
                 var dataEntrada = $(this.node()).find('td[data-date]').attr('data-date');
-                if(dataEntrada && dataEntrada.substr(0,7)===mesano){
+                if (dataEntrada && dataEntrada.substr(0, 7) === mesano) {
                     $(this.node()).show();
                 } else {
                     $(this.node()).hide();
@@ -379,7 +388,7 @@
         renderBotoes(idx_atual);
         filtrarTabela(idx_atual);
         // Navegação
-        $('#filtro-mes-ano').on('click', '.btn-mes:not([disabled])', function(){
+        $('#filtro-mes-ano').on('click', '.btn-mes:not([disabled])', function () {
             var idx = parseInt($(this).data('idx'));
             renderBotoes(idx);
             filtrarTabela(idx);
